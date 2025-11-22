@@ -1,36 +1,78 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Novara v2 - AI Video Ad Generator
 
-## Getting Started
+A Next.js application that interfaces with n8n to generate video ads.
 
-First, run the development server:
+## Features
+- **Job Creation**: Submit product details and images.
+- **n8n Integration**: Forwards requests to n8n workflow for processing.
+- **Real-time Status**: Polls for job completion.
+- **Video Preview**: Watch and download the generated video.
+
+## Setup
+
+### Prerequisites
+- Node.js 18+
+- Supabase project
+- n8n instance
+
+### Environment Variables
+Copy `.env.example` to `.env.local` and fill in the values:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cp .env.example .env.local
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- `NEXT_PUBLIC_N8N_WEBHOOK_URL`: The URL of your n8n "On form submission" webhook.
+- `N8N_CALLBACK_SECRET`: A secret string shared between this app and n8n.
+- `SUPABASE_URL`: Your Supabase project URL.
+- `SUPABASE_KEY`: Your Supabase anon key.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Installation
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+pnpm install
+```
 
-## Learn More
+### Database Setup
+Run the SQL migration in your Supabase SQL Editor:
+`supabase/schema.sql`
 
-To learn more about Next.js, take a look at the following resources:
+### Running Locally
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+pnpm dev
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Open [http://localhost:3000/create](http://localhost:3000/create) to start.
 
-## Deploy on Vercel
+## n8n Integration Guide
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+To connect your n8n workflow to this app:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. **Form Trigger**: Ensure your n8n workflow starts with a Webhook or Form Trigger that accepts the fields sent by this app (Website, Product Url, etc.).
+2. **Callback Node**: Add an **HTTP Request** node at the end of your workflow to notify this app when the video is ready.
+
+**Node Configuration:**
+- **Method**: POST
+- **URL**: `YOUR_PUBLIC_APP_URL/api/n8n/callback` (e.g., `https://your-app.vercel.app/api/n8n/callback` or use ngrok for local dev)
+- **Headers**:
+    - `Content-Type`: `application/json`
+    - `x-n8n-secret`: `YOUR_SECRET_FROM_ENV`
+- **Body**:
+    ```json
+    {
+      "job_id": "={{ $json.job_id }}",
+      "cir_id": "={{ $json.cir_id }}",
+      "video_url": "={{ $json.output_video_url }}",
+      "time_taken": "={{ $json.time_taken }}"
+    }
+    ```
+    *Note: Adjust the expression `{{ $json.output_video_url }}` to match your actual workflow output key.*
+
+## Deployment
+
+Deploy to Vercel:
+1. Push to GitHub.
+2. Import project in Vercel.
+3. Add Environment Variables in Vercel dashboard.
+4. Deploy.
