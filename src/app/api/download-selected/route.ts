@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
         const mediaOutputs = job.payload?.media_outputs || [];
 
         // Filter selected media
-        const selectedMedia = mediaOutputs.filter((m: any) => media_ids.includes(m.id));
+        const selectedMedia = mediaOutputs.filter((m: { id: string }) => media_ids.includes(m.id));
 
         if (selectedMedia.length === 0) {
             return NextResponse.json(
@@ -114,10 +114,11 @@ export async function POST(request: NextRequest) {
             }
         );
 
-    } catch (error: any) {
+    } catch (error) {
         console.error('[Download Selected] Error:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         return NextResponse.json(
-            { error: 'Failed to create download', details: error.message },
+            { error: 'Failed to create download', details: errorMessage },
             { status: 500 }
         );
     }

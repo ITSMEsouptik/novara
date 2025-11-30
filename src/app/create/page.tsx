@@ -9,7 +9,6 @@ export default function CreatePage() {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
     const [files, setFiles] = useState<File[]>([]);
-    const [imageInputMethod, setImageInputMethod] = useState<'upload' | 'url'>('upload');
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const [formData, setFormData] = useState({
@@ -20,7 +19,6 @@ export default function CreatePage() {
         targetAudience: '',
         painPoint: '',
         campaignGoal: '',
-        imageUrls: '', // New field for image URLs
     });
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -50,11 +48,6 @@ export default function CreatePage() {
             files.forEach((file) => {
                 data.append('Product Images ', file);
             });
-
-            // Add image URLs if provided
-            if (formData.imageUrls.trim()) {
-                data.append('Image URLs', formData.imageUrls);
-            }
 
             const res = await fetch('/api/submit', {
                 method: 'POST',
@@ -94,17 +87,18 @@ export default function CreatePage() {
                                     <input
                                         required
                                         type="url"
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-gray-900"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                                         placeholder="https://example.com"
                                         value={formData.website}
                                         onChange={(e) => setFormData({ ...formData, website: e.target.value })}
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Product URL <span className="text-gray-400 text-xs">(Optional)</span></label>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Product URL</label>
                                     <input
+                                        required
                                         type="url"
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-gray-900"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                                         placeholder="https://example.com/product"
                                         value={formData.productUrl}
                                         onChange={(e) => setFormData({ ...formData, productUrl: e.target.value })}
@@ -113,10 +107,11 @@ export default function CreatePage() {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Product Description <span className="text-gray-400 text-xs">(Optional)</span></label>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Product Description</label>
                                 <textarea
+                                    required
                                     rows={3}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-gray-900"
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                                     placeholder="Describe your product..."
                                     value={formData.productDescription}
                                     onChange={(e) => setFormData({ ...formData, productDescription: e.target.value })}
@@ -124,88 +119,43 @@ export default function CreatePage() {
                             </div>
 
                             <div>
-                                <div className="flex items-center justify-between mb-2">
-                                    <label className="block text-sm font-medium text-gray-700">Product Images <span className="text-gray-400 text-xs">(Optional)</span></label>
-                                    <div className="flex gap-2">
-                                        <button
-                                            type="button"
-                                            onClick={() => setImageInputMethod('upload')}
-                                            className={clsx(
-                                                "px-3 py-1 text-xs font-medium rounded-md transition-colors",
-                                                imageInputMethod === 'upload'
-                                                    ? "bg-blue-600 text-white"
-                                                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                                            )}
-                                        >
-                                            Upload
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => setImageInputMethod('url')}
-                                            className={clsx(
-                                                "px-3 py-1 text-xs font-medium rounded-md transition-colors",
-                                                imageInputMethod === 'url'
-                                                    ? "bg-blue-600 text-white"
-                                                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                                            )}
-                                        >
-                                            Image URLs
-                                        </button>
-                                    </div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Product Images</label>
+                                <div
+                                    onClick={() => fileInputRef.current?.click()}
+                                    className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-blue-500 hover:bg-blue-50 transition-all cursor-pointer group"
+                                >
+                                    <Upload className="mx-auto h-10 w-10 text-gray-400 group-hover:text-blue-500 transition-colors" />
+                                    <p className="mt-2 text-sm text-gray-600">Click to upload or drag and drop</p>
+                                    <p className="text-xs text-gray-400 mt-1">PNG, JPG up to 10MB</p>
+                                    <input
+                                        type="file"
+                                        ref={fileInputRef}
+                                        className="hidden"
+                                        multiple
+                                        accept="image/*"
+                                        onChange={handleFileChange}
+                                    />
                                 </div>
 
-                                {imageInputMethod === 'upload' ? (
-                                    <>
-                                        <div
-                                            onClick={() => fileInputRef.current?.click()}
-                                            className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-blue-500 hover:bg-blue-50 transition-all cursor-pointer group"
-                                        >
-                                            <Upload className="mx-auto h-10 w-10 text-gray-400 group-hover:text-blue-500 transition-colors" />
-                                            <p className="mt-2 text-sm text-gray-600">Click to upload or drag and drop</p>
-                                            <p className="text-xs text-gray-400 mt-1">PNG, JPG up to 10MB</p>
-                                            <input
-                                                type="file"
-                                                ref={fileInputRef}
-                                                className="hidden"
-                                                multiple
-                                                accept="image/*"
-                                                onChange={handleFileChange}
-                                            />
-                                        </div>
-
-                                        {files.length > 0 && (
-                                            <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-4">
-                                                {files.map((file, idx) => (
-                                                    <div key={idx} className="relative group aspect-square bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
-                                                        <img
-                                                            src={URL.createObjectURL(file)}
-                                                            alt="preview"
-                                                            className="w-full h-full object-cover"
-                                                        />
-                                                        <button
-                                                            type="button"
-                                                            onClick={(e) => { e.stopPropagation(); removeFile(idx); }}
-                                                            className="absolute top-1 right-1 bg-white/90 p-1 rounded-full shadow-sm hover:bg-red-50 hover:text-red-600 transition-colors opacity-0 group-hover:opacity-100"
-                                                        >
-                                                            <X className="w-4 h-4" />
-                                                        </button>
-                                                    </div>
-                                                ))}
+                                {files.length > 0 && (
+                                    <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-4">
+                                        {files.map((file, idx) => (
+                                            <div key={idx} className="relative group aspect-square bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
+                                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                <img
+                                                    src={URL.createObjectURL(file)}
+                                                    alt="preview"
+                                                    className="w-full h-full object-cover"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => { e.stopPropagation(); removeFile(idx); }}
+                                                    className="absolute top-1 right-1 bg-white/90 p-1 rounded-full shadow-sm hover:bg-red-50 hover:text-red-600 transition-colors opacity-0 group-hover:opacity-100"
+                                                >
+                                                    <X className="w-4 h-4" />
+                                                </button>
                                             </div>
-                                        )}
-                                    </>
-                                ) : (
-                                    <div>
-                                        <textarea
-                                            rows={4}
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors font-mono text-sm"
-                                            placeholder={"Enter image URLs (one per line):\nhttps://example.com/image1.jpg\nhttps://example.com/image2.png"}
-                                            value={formData.imageUrls}
-                                            onChange={(e) => setFormData({ ...formData, imageUrls: e.target.value })}
-                                        />
-                                        <p className="mt-2 text-xs text-gray-500">
-                                            💡 Tip: Enter one URL per line. Supports jpg, png, webp formats.
-                                        </p>
+                                        ))}
                                     </div>
                                 )}
                             </div>
@@ -220,7 +170,7 @@ export default function CreatePage() {
                                 <textarea
                                     required
                                     rows={2}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-gray-900"
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                                     placeholder="What is the main message?"
                                     value={formData.brief}
                                     onChange={(e) => setFormData({ ...formData, brief: e.target.value })}
@@ -233,7 +183,7 @@ export default function CreatePage() {
                                     <input
                                         required
                                         type="text"
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-gray-900"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                                         placeholder="e.g. Busy moms, Tech enthusiasts"
                                         value={formData.targetAudience}
                                         onChange={(e) => setFormData({ ...formData, targetAudience: e.target.value })}
@@ -244,7 +194,7 @@ export default function CreatePage() {
                                     <input
                                         required
                                         type="text"
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-gray-900"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                                         placeholder="e.g. Not enough time"
                                         value={formData.painPoint}
                                         onChange={(e) => setFormData({ ...formData, painPoint: e.target.value })}
@@ -257,7 +207,7 @@ export default function CreatePage() {
                                 <input
                                     required
                                     type="text"
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-gray-900"
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                                     placeholder="e.g. Brand Awareness, Conversions"
                                     value={formData.campaignGoal}
                                     onChange={(e) => setFormData({ ...formData, campaignGoal: e.target.value })}

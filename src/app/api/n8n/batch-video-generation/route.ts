@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
         const body = await request.json();
         console.log('[Batch Video Gen] Received batch:', JSON.stringify(body, null, 2));
 
-        const { parent_job_id, total_videos, payloads } = body;
+        const { parent_job_id, payloads } = body;
 
         if (!parent_job_id || !payloads || !Array.isArray(payloads)) {
             return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
@@ -81,7 +81,19 @@ export async function POST(request: NextRequest) {
     }
 }
 
-async function generateSingleVideo(parentJobId: string, payload: any) {
+interface VideoPayload {
+    prompt?: string;
+    seconds?: number;
+    size?: string;
+    n8n_metadata?: {
+        variant_job_id?: string;
+        angle_name?: string;
+        angle_id?: number;
+        is_last_video?: boolean;
+    };
+}
+
+async function generateSingleVideo(parentJobId: string, payload: VideoPayload) {
     const metadata = payload.n8n_metadata || {};
     const variantJobId = metadata.variant_job_id || parentJobId;
 

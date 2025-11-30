@@ -64,7 +64,6 @@ export async function generateVideo(jobId: string, payload: VideoPayload) {
         // 2. Poll for completion
         console.log(`[Video Gen ${jobId}] Starting polling loop (max 2 minutes)...`);
         // Simple polling mechanism: check every 5s for up to 2 minutes
-        let videoContentUrl: string | null = null;
         let attempts = 0;
         const maxAttempts = 24; // 24 * 5s = 120s
 
@@ -227,7 +226,13 @@ export async function generateStaticAd(jobId: string, payload: StaticAdPayload) 
         const hasImages = payload.imageUrls && payload.imageUrls.length > 0;
         console.log(`[Static Gen ${jobId}] Image-based generation: ${hasImages ? 'YES' : 'NO (text-only fallback)'}`);
 
-        let requestBody: any;
+        interface ImageRequestBody {
+            prompt: string;
+            model: string;
+            size: string;
+            image?: string; // base64 encoded image for image-to-image
+        }
+        let requestBody: ImageRequestBody;
 
         if (hasImages) {
             // IMAGE-TO-IMAGE MODE: Use first uploaded image

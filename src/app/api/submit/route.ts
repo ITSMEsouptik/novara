@@ -1,160 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
-import { createTablesIfNeeded } from '@/lib/db-setup';
 import FormData from 'form-data';
-import fs from 'fs';
-import path from 'path';
-// import fetch from 'node-fetch'; // Removed, using global fetch
 
 export async function POST(request: NextRequest) {
     try {
-        console.log('[Submit API] Request received');
-
-        // Ensure database tables exist (creates them if needed)
-        await createTablesIfNeeded();
-
         const formData = await request.formData();
 
-        // Generate Job ID first (we need it for image storage)
-        const jobId = crypto.randomUUID();
-        console.log(`[Submit API] Generated job_id: ${jobId}`);
-
-        // Extract fields for Supabase and save images
-        const payload: Record<string, any> = {};
-        const imageUrls: string[] = [];
-        let imageIndex = 0;
-
-        // Create directory for uploaded images if there are any files
-        const uploadDir = path.join(process.cwd(), 'public', 'uploaded_images', jobId);
-        let dirCreated = false;
-
-        for (const [key, value] of formData.entries()) {
+        // Extract fields for Supabase
+        const payload: Record<string, string | { name: string; size: number; type: string }> = {};
+        formData.forEach((value, key) => {
+            // simple handling: if multiple values, might overwrite. 
+            // For this app, we assume simple fields except files.
             if (typeof value === 'string') {
                 payload[key] = value;
-            } else if (value instanceof File) {
-                // It's a file - save it to disk
-                console.log(`[Submit API] Processing uploaded file: ${value.name} (${value.size} bytes)`);
-
-                // Create directory on first file
-                if (!dirCreated) {
-                    try {
-                        if (!fs.existsSync(uploadDir)) {
-                            console.log(`[Submit API] Creating directory: ${uploadDir}`);
-                            fs.mkdirSync(uploadDir, { recursive: true });
-                        }
-                        dirCreated = true;
-                    } catch (mkdirError) {
-                        console.error(`[Submit API] Failed to create directory:`, mkdirError);
-                        return NextResponse.json({ error: 'Failed to save uploaded images' }, { status: 500 });
-                    }
-                }
-
-                // Save file to disk
-                const fileExtension = path.extname(value.name) || '.jpg';
-                const fileName = `image_${imageIndex}${fileExtension}`;
-                const filePath = path.join(uploadDir, fileName);
-
-                try {
-                    const buffer = Buffer.from(await value.arrayBuffer());
-                    fs.writeFileSync(filePath, buffer);
-
-                    // Generate public URL (relative path - works in any environment)
-                    const publicUrl = `/uploaded_images/${jobId}/${fileName}`;
-                    imageUrls.push(publicUrl);
-
-                    console.log(`[Submit API] Saved image to: ${filePath}`);
-                    console.log(`[Submit API] Public URL: ${publicUrl}`);
-
-                    imageIndex++;
-                } catch (writeError) {
-                    console.error(`[Submit API] Failed to save file ${value.name}:`, writeError);
-                    // Continue processing other files instead of failing completely
-                    console.log(`[Submit API] Skipping file ${value.name} due to error`);
-                }
+            } else {
+                // It's a file. We don't store file content in JSON payload, maybe just metadata.
+                payload[key] = { name: (value as File).name, size: (value as File).size, type: (value as File).type };
             }
-        }
+        });
 
-        // Process Image URLs if provided
-        const imageUrlsField = formData.get('Image URLs');
-        if (imageUrlsField && typeof imageUrlsField === 'string') {
-            const urls = imageUrlsField
-                .split('\n')
-                .map(url => url.trim())
-                .filter(url => url.length > 0 && url.startsWith('http'));
-
-            console.log(`[Submit API] Found ${urls.length} image URL(s) to download`);
-
-            if (urls.length > 0) {
-                // Create directory if not already created
-                if (!dirCreated) {
-                    try {
-                        if (!fs.existsSync(uploadDir)) {
-                            console.log(`[Submit API] Creating directory: ${uploadDir}`);
-                            fs.mkdirSync(uploadDir, { recursive: true });
-                        }
-                        dirCreated = true;
-                    } catch (mkdirError) {
-                        console.error(`[Submit API] Failed to create directory:`, mkdirError);
-                        return NextResponse.json({ error: 'Failed to save images' }, { status: 500 });
-                    }
-                }
-
-                // Download each image
-                for (const url of urls) {
-                    try {
-                        console.log(`[Submit API] Downloading image from: ${url}`);
-                        const imageRes = await fetch(url);
-
-                        if (!imageRes.ok) {
-                            console.warn(`[Submit API] Failed to download ${url}: ${imageRes.status}`);
-                            continue; // Skip this URL
-                        }
-
-                        const buffer = Buffer.from(await imageRes.arrayBuffer());
-
-                        // Determine file extension from URL or content-type
-                        let fileExtension = '.jpg';
-                        const urlExt = path.extname(new URL(url).pathname);
-                        if (urlExt && ['.jpg', '.jpeg', '.png', '.webp', '.gif'].includes(urlExt.toLowerCase())) {
-                            fileExtension = urlExt;
-                        } else {
-                            const contentType = imageRes.headers.get('content-type');
-                            if (contentType?.includes('png')) fileExtension = '.png';
-                            else if (contentType?.includes('webp')) fileExtension = '.webp';
-                            else if (contentType?.includes('gif')) fileExtension = '.gif';
-                        }
-
-                        const fileName = `image_${imageIndex}${fileExtension}`;
-                        const filePath = path.join(uploadDir, fileName);
-
-                        fs.writeFileSync(filePath, buffer);
-
-                        // Generate public URL (relative path)
-                        const publicUrl = `/uploaded_images/${jobId}/${fileName}`;
-                        imageUrls.push(publicUrl);
-
-                        console.log(`[Submit API] Downloaded and saved image from URL to: ${filePath}`);
-                        console.log(`[Submit API] Public URL: ${publicUrl}`);
-
-                        imageIndex++;
-                    } catch (downloadError) {
-                        console.error(`[Submit API] Failed to download image from ${url}:`, downloadError);
-                        // Continue with other URLs
-                    }
-                }
-            }
-        }
-
-        // Add image URLs to payload
-        if (imageUrls.length > 0) {
-            payload.image_urls = imageUrls;
-            console.log(`[Submit API] Stored ${imageUrls.length} image URL(s) in payload`);
-        } else {
-            console.log(`[Submit API] No images uploaded or downloaded`);
-        }
+        // Generate Job ID (using UUID or timestamp)
+        const jobId = crypto.randomUUID();
 
         // Insert into Supabase
-        console.log(`[Submit API] Inserting job into Supabase...`);
         const { error: dbError } = await supabase
             .from('ad_jobs')
             .insert({
@@ -164,55 +32,61 @@ export async function POST(request: NextRequest) {
             });
 
         if (dbError) {
-            console.error('[Submit API] Supabase error:', dbError);
+            console.error('Supabase error:', dbError);
             return NextResponse.json({ error: 'Failed to create job' }, { status: 500 });
         }
 
-        console.log(`[Submit API] Job ${jobId} saved to Supabase successfully`);
-
         // Forward to n8n
-        console.log(`[Submit API] Forwarding to n8n webhook...`);
         const n8nUrl = process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL;
         if (!n8nUrl) {
-            console.error('[Submit API] Missing N8N_WEBHOOK_URL');
+            console.error('Missing N8N_WEBHOOK_URL');
             return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
         }
 
-        // Build JSON payload for n8n (much simpler than FormData)
-        const n8nPayload: Record<string, any> = {
-            job_id: jobId,
-            ...payload // Includes all form fields
-        };
+        // Construct new FormData for n8n
+        // We need to iterate the incoming FormData and append to the outgoing node-form-data
+        // Note: request.formData() returns Web API FormData. 
+        // 'form-data' package is Node.js stream-based.
+        // We can just use the native fetch with the Web FormData if Next.js supports it fully in Node env, 
+        // but passing file streams might be tricky.
+        // Let's try constructing a standard Request body.
 
-        // Send to n8n as JSON
-        try {
-            console.log(`[Submit API] Sending to n8n: ${n8nUrl}`);
+        // Actually, since we are in Node env (App Router), we might need to convert Web File to Buffer/Stream for 'form-data' package
+        // OR just use the incoming formData directly if we can pass it to fetch?
+        // Standard fetch supports FormData.
 
-            const response = await fetch(n8nUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(n8nPayload),
-            });
-
-            if (!response.ok) {
-                console.error(`[Submit API] n8n responded with status: ${response.status}`);
-                const errorText = await response.text().catch(() => 'Unable to read error');
-                console.error(`[Submit API] n8n error response: ${errorText}`);
+        const outgoingFormData = new FormData();
+        for (const [key, value] of formData.entries()) {
+            if (value instanceof File) {
+                const buffer = Buffer.from(await value.arrayBuffer());
+                outgoingFormData.append(key, buffer, { filename: value.name, contentType: value.type });
             } else {
-                console.log(`[Submit API] Successfully forwarded to n8n`);
+                outgoingFormData.append(key, value);
             }
-        } catch (n8nError) {
-            console.error('[Submit API] n8n error:', n8nError);
-            // We still return success to user because job is saved
         }
 
-        console.log(`[Submit API] Returning job_id to client: ${jobId}`);
+        // Add job_id to the payload sent to n8n so it knows what to callback with
+        outgoingFormData.append('job_id', jobId);
+
+        // Send to n8n (fire and forget? or wait?)
+        // We wait to ensure it's received.
+        try {
+            // We use 'form-data' package headers
+            await fetch(n8nUrl, {
+                method: 'POST',
+                body: outgoingFormData as unknown as BodyInit,
+                headers: outgoingFormData.getHeaders() as Record<string, string>,
+            });
+        } catch (n8nError) {
+            console.error('n8n error:', n8nError);
+            // We still return success to user because job is saved, but maybe mark status as failed?
+            // For now, let's assume it works or we log it.
+        }
+
         return NextResponse.json({ job_id: jobId });
 
     } catch (error) {
-        console.error('[Submit API] Submit error:', error);
+        console.error('Submit error:', error);
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
 }
