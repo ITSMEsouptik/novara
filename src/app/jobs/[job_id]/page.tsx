@@ -1,200 +1,293 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
-import { CheckCircle, Loader2, AlertCircle, Download, ArrowLeft } from 'lucide-react';
-import Link from 'next/link';
-import clsx from 'clsx';
+import { use } from 'react';
 
-type JobStatus = 'submitted' | 'processing' | 'completed' | 'failed';
-
-interface JobData {
-    job_id: string;
-    status: JobStatus;
-    video_url?: string;
-    created_at: string;
-    completed_at?: string;
-}
-
-export default function JobPage() {
-    const params = useParams();
-    const jobId = params.job_id as string;
-    const [job, setJob] = useState<JobData | null>(null);
-    const [error, setError] = useState<string | null>(null);
-    const [polling, setPolling] = useState(true);
+export default function JobPage({ params }: { params: Promise<{ job_id: string }> }) {
+    const resolvedParams = use(params);
+    const [job, setJob] = useState<any>(null);
+    const [currentIndex, setCurrentIndex] = useState(0);
+    const [selectedMedia, setSelectedMedia] = useState<Set<string>>(new Set());
+    const [filterType, setFilterType] = useState<'all' | 'video' | 'image'>('all');
 
     useEffect(() => {
-        if (!jobId) return;
-
         const fetchStatus = async () => {
-            try {
-                const res = await fetch(`/api/status?job_id=${jobId}`);
-                if (!res.ok) {
-                    if (res.status === 404) throw new Error('Job not found');
-                    throw new Error('Failed to fetch status');
-                }
-                const data: JobData = await res.json();
-                setJob(data);
-
-                if (data.status === 'completed' || data.status === 'failed') {
-                    setPolling(false);
-                }
-            } catch (err: any) {
-                setError(err.message);
-                setPolling(false);
-            }
+            const res = await fetch(`/api/status?job_id=${resolvedParams.job_id}`);
+            const data = await res.json();
+            setJob(data);
         };
 
-        fetchStatus(); // Initial fetch
-
-        const interval = setInterval(() => {
-            if (polling) fetchStatus();
-        }, 3000);
-
+        fetchStatus();
+        const interval = setInterval(fetchStatus, 3000);
         return () => clearInterval(interval);
-    }, [jobId, polling]);
-
-    if (error) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-                <div className="bg-white p-8 rounded-xl shadow-lg max-w-md w-full text-center">
-                    <AlertCircle className="mx-auto h-12 w-12 text-red-500 mb-4" />
-                    <h2 className="text-2xl font-bold text-gray-900 mb-2">Error</h2>
-                    <p className="text-gray-600 mb-6">{error}</p>
-                    <Link href="/create" className="text-blue-600 hover:underline font-medium">
-                        Create a new campaign
-                    </Link>
-                </div>
-            </div>
-        );
-    }
+    }, [resolvedParams.job_id]);
 
     if (!job) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-50">
-                <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+                    <p className="mt-4 text-gray-600">Loading job status...</p>
+                </div>
             </div>
         );
     }
 
-    const steps = [
-        { id: 'submitted', label: 'Submitted', icon: CheckCircle },
-        { id: 'processing', label: 'Generating Content', icon: Loader2 },
-        { id: 'completed', label: 'Finalizing Video', icon: CheckCircle },
-    ];
+    const mediaOutputs = job.payload?.media_outputs || [];
+    const filteredMedia = mediaOutputs.filter((m: any) =>
+        filterType === 'all' ? true : m.type === filterType
+    );
 
-    const currentStepIndex =
-        job.status === 'submitted' ? 0 :
-            job.status === 'processing' ? 1 :
-                job.status === 'completed' ? 3 : 2; // 'failed' handled separately or falls through
+    const currentMedia = filteredMedia[currentIndex];
+    const hasMedia = mediaOutputs.length > 0;
+    const videoCount = mediaOutputs.filter((m: any) => m.type === 'video').length;
+    const imageCount = mediaOutputs.filter((m: any) => m.type === 'image').length;
+
+    const handleSelectAll = () => {
+        setSelectedMedia(new Set(filteredMedia.map((m: any) => m.id)));
+    };
+
+    const handleDeselectAll = () => {
+        setSelectedMedia(new Set());
+    };
+
+    const handleDownloadSelected = async () => {
+        if (selectedMedia.size === 0) return;
+
+        const res = await fetch('/api/download-selected', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                job_id: resolvedParams.job_id,
+                media_ids: Array.from(selectedMedia)
+            })
+        });
+
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = selectedMedia.size === 1 ? 'media.mp4' : `campaign_${resolvedParams.job_id}.zip`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+    };
 
     return (
-        <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-            <div className="max-w-4xl mx-auto">
-                <div className="mb-8">
-                    <Link href="/create" className="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors">
-                        <ArrowLeft className="h-4 w-4 mr-2" />
-                        Back to Create
-                    </Link>
-                </div>
-
-                <div className="bg-white shadow-xl rounded-2xl overflow-hidden">
-                    <div className="p-8 border-b border-gray-100">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <h1 className="text-2xl font-bold text-gray-900">Campaign #{job.job_id.slice(0, 8)}</h1>
-                                <p className="text-sm text-gray-500 mt-1">Created at {new Date(job.created_at).toLocaleString()}</p>
-                            </div>
-                            <div className={clsx(
-                                "px-4 py-1 rounded-full text-sm font-medium capitalize",
-                                job.status === 'completed' ? "bg-green-100 text-green-800" :
-                                    job.status === 'failed' ? "bg-red-100 text-red-800" :
-                                        "bg-blue-100 text-blue-800"
-                            )}>
-                                {job.status}
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="p-8">
-                        {job.status === 'failed' ? (
-                            <div className="text-center py-12">
-                                <AlertCircle className="mx-auto h-16 w-16 text-red-500 mb-4" />
-                                <h3 className="text-xl font-semibold text-gray-900">Generation Failed</h3>
-                                <p className="text-gray-600 mt-2">Something went wrong during the video generation process.</p>
-                            </div>
-                        ) : job.status === 'completed' && job.video_url ? (
-                            <div className="space-y-8">
-                                <div className="aspect-video bg-black rounded-xl overflow-hidden shadow-lg relative group">
-                                    <video
-                                        controls
-                                        className="w-full h-full"
-                                        src={job.video_url}
-                                        poster="/placeholder-video-poster.jpg" // Optional
-                                    >
-                                        Your browser does not support the video tag.
-                                    </video>
-                                </div>
-
-                                <div className="flex justify-center">
-                                    <a
-                                        href={job.video_url}
-                                        download
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                                    >
-                                        <Download className="mr-2 h-5 w-5" />
-                                        Download Video
-                                    </a>
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="py-12">
-                                <div className="max-w-xl mx-auto">
-                                    <div className="relative">
-                                        {/* Progress Bar */}
-                                        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-gray-200 rounded-full -z-10"></div>
-                                        <div
-                                            className="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-blue-600 rounded-full -z-10 transition-all duration-500"
-                                            style={{ width: `${(currentStepIndex / 2) * 100}%` }}
-                                        ></div>
-
-                                        <div className="flex justify-between">
-                                            {steps.map((step, idx) => {
-                                                const isCompleted = idx < currentStepIndex;
-                                                const isCurrent = idx === currentStepIndex;
-                                                const Icon = step.icon;
-
-                                                return (
-                                                    <div key={step.id} className="flex flex-col items-center bg-white px-2">
-                                                        <div className={clsx(
-                                                            "w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all duration-300",
-                                                            isCompleted ? "bg-blue-600 border-blue-600 text-white" :
-                                                                isCurrent ? "bg-white border-blue-600 text-blue-600" :
-                                                                    "bg-white border-gray-300 text-gray-300"
-                                                        )}>
-                                                            <Icon className={clsx("w-5 h-5", isCurrent && step.id === 'processing' && "animate-spin")} />
-                                                        </div>
-                                                        <span className={clsx(
-                                                            "mt-2 text-xs font-medium transition-colors duration-300",
-                                                            isCompleted || isCurrent ? "text-blue-600" : "text-gray-400"
-                                                        )}>
-                                                            {step.label}
-                                                        </span>
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                    </div>
-                                    <p className="text-center text-gray-500 mt-8 animate-pulse">
-                                        {job.status === 'submitted' ? 'Sending details to AI agent...' : 'AI is analyzing and generating video...'}
-                                    </p>
-                                </div>
-                            </div>
+        <div className="min-h-screen bg-gray-50 py-8 px-4">
+            <div className="max-w-6xl mx-auto">
+                {/* Header */}
+                <div className="bg-white rounded-lg shadow p-6 mb-6">
+                    <h1 className="text-2xl font-bold text-gray-900">Campaign #{resolvedParams.job_id.slice(0, 8)}</h1>
+                    <div className="mt-2 flex items-center gap-2">
+                        <span className={`px-3 py-1 rounded-full text-sm font-medium ${job.status === 'completed' ? 'bg-green-100 text-green-800' :
+                            job.status === 'processing' ? 'bg-blue-100 text-blue-800' :
+                                job.status === 'failed' ? 'bg-red-100 text-red-800' :
+                                    'bg-yellow-100 text-yellow-800'
+                            }`}>
+                            {job.status}
+                        </span>
+                        {hasMedia && (
+                            <span className="text-sm text-gray-600">
+                                {videoCount > 0 && `${videoCount} video${videoCount !== 1 ? 's' : ''}`}
+                                {videoCount > 0 && imageCount > 0 && ' · '}
+                                {imageCount > 0 && `${imageCount} image${imageCount !== 1 ? 's' : ''}`}
+                            </span>
                         )}
                     </div>
                 </div>
+
+                {/* Show different UI based on status and media availability */}
+                {job.status === 'submitted' && (
+                    <div className="bg-white rounded-lg shadow p-12 text-center">
+                        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto"></div>
+                        <p className="mt-6 text-lg text-gray-700">Processing your campaign...</p>
+                        <p className="mt-2 text-sm text-gray-500">This usually takes 2-5 minutes</p>
+                    </div>
+                )}
+
+                {job.status === 'failed' && (
+                    <div className="bg-white rounded-lg shadow p-12 text-center">
+                        <div className="text-red-500 text-5xl mb-4">⚠️</div>
+                        <p className="text-lg text-gray-700">Campaign generation failed</p>
+                        <p className="mt-2 text-sm text-gray-500">Please try submitting again</p>
+                    </div>
+                )}
+
+                {job.status === 'completed' && !hasMedia && (
+                    <div className="bg-white rounded-lg shadow p-12 text-center">
+                        <div className="text-gray-400 text-5xl mb-4">📭</div>
+                        <p className="text-lg text-gray-700">No media generated</p>
+                        <p className="mt-2 text-sm text-gray-500">The workflow completed but no videos or images were created</p>
+                    </div>
+                )}
+
+                {hasMedia && (
+                    <>
+                        {/* Filter Buttons */}
+                        <div className="flex gap-2 mb-4">
+                            <button
+                                onClick={() => { setFilterType('all'); setCurrentIndex(0); }}
+                                className={`px-4 py-2 rounded-lg font-medium transition-colors ${filterType === 'all'
+                                    ? 'bg-blue-600 text-white'
+                                    : 'bg-white text-gray-700 hover:bg-gray-50'
+                                    }`}
+                            >
+                                All ({mediaOutputs.length})
+                            </button>
+                            {videoCount > 0 && (
+                                <button
+                                    onClick={() => { setFilterType('video'); setCurrentIndex(0); }}
+                                    className={`px-4 py-2 rounded-lg font-medium transition-colors ${filterType === 'video'
+                                        ? 'bg-blue-600 text-white'
+                                        : 'bg-white text-gray-700 hover:bg-gray-50'
+                                        }`}
+                                >
+                                    Videos ({videoCount})
+                                </button>
+                            )}
+                            {imageCount > 0 && (
+                                <button
+                                    onClick={() => { setFilterType('image'); setCurrentIndex(0); }}
+                                    className={`px-4 py-2 rounded-lg font-medium transition-colors ${filterType === 'image'
+                                        ? 'bg-blue-600 text-white'
+                                        : 'bg-white text-gray-700 hover:bg-gray-50'
+                                        }`}
+                                >
+                                    Images ({imageCount})
+                                </button>
+                            )}
+                        </div>
+
+                        {filteredMedia.length === 0 ? (
+                            <div className="bg-white rounded-lg shadow p-12 text-center">
+                                <p className="text-gray-600">No {filterType}s available</p>
+                            </div>
+                        ) : (
+                            <div className="bg-white rounded-lg shadow p-6">
+                                {/* Carousel */}
+                                <div className="relative">
+                                    <div className="aspect-video bg-black rounded-lg overflow-hidden mb-4">
+                                        {currentMedia.type === 'video' ? (
+                                            <video
+                                                key={currentMedia.url}
+                                                src={currentMedia.url}
+                                                controls
+                                                className="w-full h-full"
+                                            />
+                                        ) : (
+                                            <img
+                                                src={currentMedia.url}
+                                                alt={currentMedia.prompt}
+                                                className="w-full h-full object-contain"
+                                            />
+                                        )}
+                                    </div>
+
+                                    {/* Navigation */}
+                                    {filteredMedia.length > 1 && (
+                                        <>
+                                            <button
+                                                onClick={() => setCurrentIndex((i) => (i - 1 + filteredMedia.length) % filteredMedia.length)}
+                                                className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white p-3 rounded-full shadow-lg"
+                                            >
+                                                ◀
+                                            </button>
+                                            <button
+                                                onClick={() => setCurrentIndex((i) => (i + 1) % filteredMedia.length)}
+                                                className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white p-3 rounded-full shadow-lg"
+                                            >
+                                                ▶
+                                            </button>
+                                        </>
+                                    )}
+
+                                    {/* Selection Checkbox */}
+                                    <button
+                                        onClick={() => {
+                                            const newSelected = new Set(selectedMedia);
+                                            if (newSelected.has(currentMedia.id)) {
+                                                newSelected.delete(currentMedia.id);
+                                            } else {
+                                                newSelected.add(currentMedia.id);
+                                            }
+                                            setSelectedMedia(newSelected);
+                                        }}
+                                        className="absolute top-4 right-4 bg-white/90 p-2 rounded-lg shadow-lg hover:bg-white"
+                                    >
+                                        {selectedMedia.has(currentMedia.id) ? '✅' : '☐'}
+                                    </button>
+                                </div>
+
+                                {/* Media Info */}
+                                <div className="border-t pt-4">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <span className="text-sm font-medium px-2 py-1 bg-gray-100 rounded">
+                                            {currentMedia.type === 'video' ? '🎬 Video' : '🖼️ Image'}
+                                        </span>
+                                        {currentMedia.placement && (
+                                            <span className="text-sm text-gray-600 px-2 py-1 bg-gray-50 rounded">
+                                                {currentMedia.placement}
+                                            </span>
+                                        )}
+                                        <span className="text-sm text-gray-600">{currentMedia.angle_name}</span>
+                                        <span className="ml-auto text-sm text-gray-500">
+                                            {currentIndex + 1} / {filteredMedia.length}
+                                        </span>
+                                    </div>
+                                    <p className="text-sm text-gray-600 line-clamp-2">{currentMedia.prompt}</p>
+                                </div>
+
+                                {/* Thumbnail Strip */}
+                                {filteredMedia.length > 1 && (
+                                    <div className="flex gap-2 overflow-x-auto pb-4 mt-4 snap-x snap-mandatory scrollbar-hide">
+                                        {filteredMedia.map((media: any, idx: number) => (
+                                            <button
+                                                key={media.id}
+                                                onClick={() => setCurrentIndex(idx)}
+                                                className={`relative flex-shrink-0 w-24 h-24 rounded-lg overflow-hidden snap-start ${idx === currentIndex ? 'ring-2 ring-blue-500' : ''
+                                                    }`}
+                                            >
+                                                {media.type === 'video' ? (
+                                                    <video src={media.url} className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <img src={media.url} alt="" className="w-full h-full object-cover" />
+                                                )}
+                                                {selectedMedia.has(media.id) && (
+                                                    <div className="absolute inset-0 bg-blue-500/30 flex items-center justify-center">
+                                                        <span className="text-white text-2xl">✓</span>
+                                                    </div>
+                                                )}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {/* Selection Controls */}
+                                <div className="border-t pt-4 flex items-center justify-between">
+                                    <div className="flex gap-2">
+                                        <button onClick={handleSelectAll} className="text-sm text-blue-600 hover:underline">
+                                            Select All
+                                        </button>
+                                        <span className="text-gray-300">|</span>
+                                        <button onClick={handleDeselectAll} className="text-sm text-blue-600 hover:underline">
+                                            Deselect All
+                                        </button>
+                                        <span className="ml-4 text-sm text-gray-600">{selectedMedia.size} selected</span>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={handleDownloadSelected}
+                                            disabled={selectedMedia.size === 0}
+                                            className="px-4 py-2 bg-blue-600 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-700"
+                                        >
+                                            Download Selected ({selectedMedia.size})
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </>
+                )}
             </div>
         </div>
     );
