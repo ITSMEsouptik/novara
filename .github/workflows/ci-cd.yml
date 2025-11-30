@@ -69,7 +69,7 @@ jobs:
           N8N_CALLBACK_SECRET: ${{ secrets.N8N_CALLBACK_SECRET }}
 
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: github.event_name == 'pull_request'
         with:
           name: build-artifacts
@@ -120,6 +120,29 @@ jobs:
           
           echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
 
+      - name: Build optional secrets string
+        id: secrets
+        run: |
+          SECRETS_ARRAY=()
+          
+          # Check if secrets are set (non-empty) and add them to the array
+          # Note: These secrets must exist in both GitHub Secrets and GCP Secret Manager
+          [ -n "${{ secrets.NEXT_PUBLIC_N8N_WEBHOOK_URL }}" ] && SECRETS_ARRAY+=("NEXT_PUBLIC_N8N_WEBHOOK_URL=NEXT_PUBLIC_N8N_WEBHOOK_URL:latest")
+          [ -n "${{ secrets.N8N_CALLBACK_SECRET }}" ] && SECRETS_ARRAY+=("N8N_CALLBACK_SECRET=N8N_CALLBACK_SECRET:latest")
+          [ -n "${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}" ] && SECRETS_ARRAY+=("NEXT_PUBLIC_SUPABASE_URL=NEXT_PUBLIC_SUPABASE_URL:latest")
+          [ -n "${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" ] && SECRETS_ARRAY+=("SUPABASE_SERVICE_ROLE_KEY=SUPABASE_SERVICE_ROLE_KEY:latest")
+          [ -n "${{ secrets.COMET_API_KEY }}" ] && SECRETS_ARRAY+=("COMET_API_KEY=COMET_API_KEY:latest")
+          
+          # Join array with commas if any secrets exist
+          if [ ${#SECRETS_ARRAY[@]} -gt 0 ]; then
+            SECRETS_STRING=$(IFS=,; echo "${SECRETS_ARRAY[*]}")
+            echo "SECRETS_FLAG=--set-secrets=$SECRETS_STRING" >> $GITHUB_OUTPUT
+            echo "✅ Configured ${#SECRETS_ARRAY[@]} optional secret(s)"
+          else
+            echo "SECRETS_FLAG=" >> $GITHUB_OUTPUT
+            echo "ℹ️  No optional secrets configured - deployment will proceed without them"
+          fi
+
       - name: Deploy to Cloud Run
         run: |
           gcloud run deploy ${{ steps.env.outputs.SERVICE_NAME }} \
@@ -128,7 +151,7 @@ jobs:
             --platform managed \
             --allow-unauthenticated \
             --set-env-vars="NODE_ENV=production" \
-            --set-secrets="NEXT_PUBLIC_N8N_WEBHOOK_URL=NEXT_PUBLIC_N8N_WEBHOOK_URL:latest,N8N_CALLBACK_SECRET=N8N_CALLBACK_SECRET:latest,NEXT_PUBLIC_SUPABASE_URL=NEXT_PUBLIC_SUPABASE_URL:latest,SUPABASE_SERVICE_ROLE_KEY=SUPABASE_SERVICE_ROLE_KEY:latest,COMET_API_KEY=COMET_API_KEY:latest" \
+            ${{ steps.secrets.outputs.SECRETS_FLAG }} \
             --min-instances=${{ steps.env.outputs.ENV == 'prod' && '1' || '0' }} \
             --max-instances=${{ steps.env.outputs.ENV == 'prod' && '100' || '10' }} \
             --cpu=${{ steps.env.outputs.ENV == 'prod' && '2' || '1' }} \
