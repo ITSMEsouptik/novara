@@ -6,17 +6,29 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {
+    "@react-three/cannon": "^6.6.0",
+    "@react-three/drei": "^10.7.7",
+    "@react-three/fiber": "^9.4.2",
     "@supabase/supabase-js": "^2.84.0",
+    "@types/archiver": "^7.0.0",
+    "@types/pg": "^8.15.6",
+    "archiver": "^7.0.1",
     "clsx": "^2.1.1",
     "form-data": "^4.0.5",
     "lucide-react": "^0.554.0",
     "next": "16.0.3",
+    "pg": "^8.16.3",
     "react": "19.2.0",
     "react-dom": "19.2.0",
-    "tailwind-merge": "^3.4.0"
+    "tailwind-merge": "^3.4.0",
+    "three": "^0.181.2"
   },
   "devDependencies": {
     "@playwright/test": "^1.56.1",

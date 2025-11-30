@@ -1,0 +1,165 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - develop
+      - main
+  pull_request:
+    branches:
+      - develop
+      - main
+
+env:
+  GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+  ARTIFACT_REGISTRY: ${{ secrets.ARTIFACT_REGISTRY }}
+  REGION: us-central1
+
+jobs:
+  # CI Job - Runs on all pushes and PRs
+  ci:
+    name: Continuous Integration
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run linter
+        run: pnpm lint
+
+      - name: Run unit tests
+        run: pnpm test
+        env:
+          CI: true
+
+      - name: Build application
+        run: pnpm build
+        env:
+          NEXT_PUBLIC_N8N_WEBHOOK_URL: ${{ secrets.NEXT_PUBLIC_N8N_WEBHOOK_URL }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          N8N_CALLBACK_SECRET: ${{ secrets.N8N_CALLBACK_SECRET }}
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
+        if: github.event_name == 'pull_request'
+        with:
+          name: build-artifacts
+          path: .next
+          retention-days: 1
+
+  # CD Job - Only runs on pushes to develop or main
+  cd:
+    name: Continuous Deployment
+    needs: ci
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main')
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for GCR
+        run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
+
+      - name: Determine environment
+        id: env
+        run: |
+          if [ "${{ github.ref }}" == "refs/heads/develop" ]; then
+            echo "ENV=test" >> $GITHUB_OUTPUT
+            echo "SERVICE_NAME=novara-test" >> $GITHUB_OUTPUT
+          else
+            echo "ENV=prod" >> $GITHUB_OUTPUT
+            echo "SERVICE_NAME=novara-prod" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build and push Docker image
+        run: |
+          IMAGE_TAG="${{ env.REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY }}/novara:${{ steps.env.outputs.ENV }}-${{ github.sha }}"
+          IMAGE_LATEST="${{ env.REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY }}/novara:${{ steps.env.outputs.ENV }}-latest"
+          
+          docker build -t $IMAGE_TAG -t $IMAGE_LATEST .
+          docker push $IMAGE_TAG
+          docker push $IMAGE_LATEST
+          
+          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
+
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy ${{ steps.env.outputs.SERVICE_NAME }} \
+            --image ${{ env.IMAGE_TAG }} \
+            --region ${{ env.REGION }} \
+            --platform managed \
+            --allow-unauthenticated \
+            --set-env-vars="NODE_ENV=production" \
+            --set-secrets="NEXT_PUBLIC_N8N_WEBHOOK_URL=NEXT_PUBLIC_N8N_WEBHOOK_URL:latest,N8N_CALLBACK_SECRET=N8N_CALLBACK_SECRET:latest,NEXT_PUBLIC_SUPABASE_URL=NEXT_PUBLIC_SUPABASE_URL:latest,SUPABASE_SERVICE_ROLE_KEY=SUPABASE_SERVICE_ROLE_KEY:latest,COMET_API_KEY=COMET_API_KEY:latest" \
+            --min-instances=${{ steps.env.outputs.ENV == 'prod' && '1' || '0' }} \
+            --max-instances=${{ steps.env.outputs.ENV == 'prod' && '100' || '10' }} \
+            --cpu=${{ steps.env.outputs.ENV == 'prod' && '2' || '1' }} \
+            --memory=${{ steps.env.outputs.ENV == 'prod' && '1Gi' || '512Mi' }} \
+            --timeout=300 \
+            --concurrency=80 \
+            --port=3000
+
+      - name: Run smoke tests
+        run: |
+          SERVICE_URL=$(gcloud run services describe ${{ steps.env.outputs.SERVICE_NAME }} \
+            --region ${{ env.REGION }} \
+            --format 'value(status.url)')
+          
+          echo "Testing service at: $SERVICE_URL"
+          
+          # Basic health check
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" $SERVICE_URL || echo "000")
+          
+          if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 400 ]; then
+            echo "✅ Service is healthy (HTTP $HTTP_CODE)"
+          else
+            echo "❌ Service health check failed (HTTP $HTTP_CODE)"
+            exit 1
+          fi
+
+      - name: Output deployment URL
+        run: |
+          SERVICE_URL=$(gcloud run services describe ${{ steps.env.outputs.SERVICE_NAME }} \
+            --region ${{ env.REGION }} \
+            --format 'value(status.url)')
+          echo "🚀 Deployed to: $SERVICE_URL"
+          echo "Environment: ${{ steps.env.outputs.ENV }}"
+
