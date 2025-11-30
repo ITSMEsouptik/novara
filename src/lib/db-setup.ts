@@ -80,7 +80,7 @@ export async function createTablesIfNeeded() {
             const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
             if (supabaseUrl && serviceKey) {
-                const response = await fetch(`${supabaseUrl}/rest/v1/`, {
+                await fetch(`${supabaseUrl}/rest/v1/`, {
                     method: 'POST',
                     headers: {
                         'apikey': serviceKey,
@@ -103,15 +103,16 @@ export async function createTablesIfNeeded() {
 
                 console.log('[DB Setup] ✓ Schema cache reloaded');
             }
-        } catch (reloadError) {
+        } catch {
             console.log('[DB Setup] Could not reload schema cache automatically');
             console.log('[DB Setup] Please reload manually: Supabase Dashboard → Table Editor → Refresh');
         }
 
         tablesCreated = true;
         return true;
-    } catch (error: any) {
-        console.error('[DB Setup] Failed to create tables:', error.message);
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        console.error('[DB Setup] Failed to create tables:', errorMessage);
         console.error('[DB Setup] Please verify your DATABASE_URL is correct');
         return false;
     }
