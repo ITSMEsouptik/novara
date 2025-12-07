@@ -45,7 +45,7 @@ export const Trophy = () => {
                <div>
                  <h4 className="text-brand-primary font-bold mb-1">100% Brand-Safe Guarantee</h4>
                  <p className="text-sm text-brand-textSecondary leading-relaxed">
-                    We match your fonts, logos, and colors perfectly. If it doesn't look like you, we fix it for free.
+                    We match your fonts, logos, and colors perfectly. If it doesn&apos;t look like you, we fix it for free.
                  </p>
                </div>
             </div>

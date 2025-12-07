@@ -4,7 +4,7 @@ export const Offer = () => {
   return (
     <section id="offer" className="py-20 px-6 bg-brand-surface">
       <div className="max-w-[1200px] mx-auto text-center">
-        <h2 className="text-3xl md:text-5xl font-bold mb-10 text-brand-text">Cheaper than a failed "Boost Post."</h2>
+        <h2 className="text-3xl md:text-5xl font-bold mb-10 text-brand-text">Cheaper than a failed &quot;Boost Post.&quot;</h2>
         <div className="bg-white border-2 border-brand-primary rounded-2xl shadow-lg p-10 max-w-[500px] mx-auto animate-slideUp">
           <h3 className="text-2xl font-bold mb-2 text-brand-text">The Pilot Pack</h3>
           <p className="text-brand-textSecondary italic mb-6">Perfect for your first campaign.</p>

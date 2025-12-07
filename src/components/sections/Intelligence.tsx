@@ -25,10 +25,10 @@ export const Intelligence = () => {
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-5xl font-bold text-brand-text mb-4">
             We analyzed 100,000+ winning ads. <br/>
-            So you don't have to.
+            So you don&apos;t have to.
           </h2>
           <p className="text-lg text-brand-textSecondary italic">
-            Most admakers guess what "looks pretty." Novara engineers what sells.
+            Most admakers guess what &quot;looks pretty.&quot; Novara engineers what sells.
           </p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

@@ -28,7 +28,7 @@ export const Mirror = () => {
           ))}
         </div>
         <p className="text-center text-lg italic text-brand-primary font-medium">
-          It's not your fault. The game was rigged against small teams. Until now.
+          It&apos;s not your fault. The game was rigged against small teams. Until now.
         </p>
       </div>
     </section>

@@ -23,7 +23,7 @@ export const HowItWorks = () => {
     <section id="how-it-works" className="py-20 px-6 bg-brand-background">
       <div className="max-w-[700px] mx-auto">
         <h2 className="text-3xl md:text-5xl font-bold text-center mb-16 text-brand-text">
-          We don't need your footage. <br/> We need your URL.
+          We don&apos;t need your footage. <br/> We need your URL.
         </h2>
         <div className="space-y-12">
           {steps.map((step, idx) => (
