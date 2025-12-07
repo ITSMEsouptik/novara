@@ -9,12 +9,18 @@ on:
     branches:
       - develop
       - main
+    types: [opened, synchronize, reopened, closed]
 
 env:
   GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
   GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
   ARTIFACT_REGISTRY: ${{ secrets.ARTIFACT_REGISTRY }}
   REGION: us-central1
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
 
 jobs:
   # CI Job - Runs on all pushes and PRs
@@ -75,6 +81,188 @@ jobs:
           name: build-artifacts
           path: .next
           retention-days: 1
+
+  # Preview Deployment Job - Runs on PRs to deploy to preview environment
+  preview-deploy:
+    name: Preview Deployment
+    needs: ci
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for GCR
+        run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
+
+      - name: Validate required secrets
+        run: |
+          if [ -z "${{ secrets.GCP_PROJECT_ID }}" ]; then
+            echo "❌ Error: GCP_PROJECT_ID secret is required but not set"
+            exit 1
+          fi
+          if [ -z "${{ secrets.GCP_SA_KEY }}" ]; then
+            echo "❌ Error: GCP_SA_KEY secret is required but not set"
+            exit 1
+          fi
+          if [ -z "${{ secrets.ARTIFACT_REGISTRY }}" ]; then
+            echo "❌ Error: ARTIFACT_REGISTRY secret is required but not set"
+            exit 1
+          fi
+          echo "✅ Required GCP secrets are configured"
+
+      - name: Build and push Docker image
+        run: |
+          PR_NUMBER=${{ github.event.pull_request.number }}
+          IMAGE_TAG="${{ env.REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY }}/novara:preview-pr-$PR_NUMBER-${{ github.sha }}"
+          
+          docker build \
+            --build-arg NEXT_PUBLIC_N8N_WEBHOOK_URL="${{ secrets.NEXT_PUBLIC_N8N_WEBHOOK_URL }}" \
+            --build-arg NEXT_PUBLIC_SUPABASE_URL="${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}" \
+            --build-arg SUPABASE_SERVICE_ROLE_KEY="${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            --build-arg N8N_CALLBACK_SECRET="${{ secrets.N8N_CALLBACK_SECRET }}" \
+            -t $IMAGE_TAG .
+          docker push $IMAGE_TAG
+          
+          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
+          echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
+
+      - name: Build optional secrets string
+        id: secrets
+        run: |
+          SECRETS_ARRAY=()
+          
+          [ -n "${{ secrets.NEXT_PUBLIC_N8N_WEBHOOK_URL }}" ] && SECRETS_ARRAY+=("NEXT_PUBLIC_N8N_WEBHOOK_URL=NEXT_PUBLIC_N8N_WEBHOOK_URL:latest")
+          [ -n "${{ secrets.N8N_CALLBACK_SECRET }}" ] && SECRETS_ARRAY+=("N8N_CALLBACK_SECRET=N8N_CALLBACK_SECRET:latest")
+          [ -n "${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}" ] && SECRETS_ARRAY+=("NEXT_PUBLIC_SUPABASE_URL=NEXT_PUBLIC_SUPABASE_URL:latest")
+          [ -n "${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" ] && SECRETS_ARRAY+=("SUPABASE_SERVICE_ROLE_KEY=SUPABASE_SERVICE_ROLE_KEY:latest")
+          [ -n "${{ secrets.COMET_API_KEY }}" ] && SECRETS_ARRAY+=("COMET_API_KEY=COMET_API_KEY:latest")
+          
+          if [ ${#SECRETS_ARRAY[@]} -gt 0 ]; then
+            SECRETS_STRING=$(IFS=,; echo "${SECRETS_ARRAY[*]}")
+            echo "SECRETS_FLAG=--set-secrets=$SECRETS_STRING" >> $GITHUB_OUTPUT
+            echo "✅ Configured ${#SECRETS_ARRAY[@]} optional secret(s)"
+          else
+            echo "SECRETS_FLAG=" >> $GITHUB_OUTPUT
+            echo "ℹ️  No optional secrets configured - deployment will proceed without them"
+          fi
+
+      - name: Deploy to Cloud Run Preview
+        id: deploy
+        run: |
+          PR_NUMBER=${{ github.event.pull_request.number }}
+          SERVICE_NAME="novara-preview-pr-$PR_NUMBER"
+          
+          gcloud run deploy $SERVICE_NAME \
+            --image ${{ env.IMAGE_TAG }} \
+            --region ${{ env.REGION }} \
+            --platform managed \
+            --allow-unauthenticated \
+            --set-env-vars="NODE_ENV=production" \
+            ${{ steps.secrets.outputs.SECRETS_FLAG }} \
+            --min-instances=0 \
+            --max-instances=5 \
+            --cpu=1 \
+            --memory=512Mi \
+            --timeout=300 \
+            --concurrency=80 \
+            --port=3000 \
+            --quiet
+          
+          SERVICE_URL=$(gcloud run services describe $SERVICE_NAME \
+            --region ${{ env.REGION }} \
+            --format 'value(status.url)')
+          
+          echo "SERVICE_URL=$SERVICE_URL" >> $GITHUB_OUTPUT
+          echo "SERVICE_NAME=$SERVICE_NAME" >> $GITHUB_OUTPUT
+          echo "🚀 Preview deployed to: $SERVICE_URL"
+
+      - name: Run smoke tests
+        run: |
+          SERVICE_URL="${{ steps.deploy.outputs.SERVICE_URL }}"
+          
+          echo "Testing preview service at: $SERVICE_URL"
+          
+          # Wait a bit for service to be fully ready
+          sleep 10
+          
+          # Basic health check with retries
+          MAX_RETRIES=5
+          RETRY_COUNT=0
+          HTTP_CODE="000"
+          
+          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" $SERVICE_URL || echo "000")
+            if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 400 ]; then
+              echo "✅ Preview service is healthy (HTTP $HTTP_CODE)"
+              exit 0
+            fi
+            RETRY_COUNT=$((RETRY_COUNT + 1))
+            echo "⏳ Retry $RETRY_COUNT/$MAX_RETRIES - Service not ready yet (HTTP $HTTP_CODE)"
+            sleep 5
+          done
+          
+          echo "❌ Preview service health check failed after $MAX_RETRIES retries (HTTP $HTTP_CODE)"
+          exit 1
+
+      - name: Comment PR with preview URL
+        uses: actions/github-script@v7
+        if: success()
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const previewUrl = '${{ steps.deploy.outputs.SERVICE_URL }}';
+            const prNumber = ${{ github.event.pull_request.number }};
+            
+            const body = `## 🚀 Preview Deployment Ready!
+            
+            Your changes have been deployed to a preview environment:
+            
+            **Preview URL:** ${previewUrl}
+            
+            This preview will be available until the PR is closed or merged.
+            
+            ---
+            *Deployed from commit: \`${{ github.sha }}\`*`;
+            
+            // Find existing comment
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+            });
+            
+            const botComment = comments.data.find(comment => 
+              comment.user.type === 'Bot' && 
+              comment.body.includes('Preview Deployment Ready')
+            );
+            
+            if (botComment) {
+              // Update existing comment
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: body
+              });
+            } else {
+              // Create new comment
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: body
+              });
+            }
 
   # CD Job - Only runs on pushes to develop or main
   cd:
@@ -206,4 +394,55 @@ jobs:
             --format 'value(status.url)')
           echo "🚀 Deployed to: $SERVICE_URL"
           echo "Environment: ${{ steps.env.outputs.ENV }}"
+
+  # Cleanup Job - Removes preview deployments when PR is closed
+  cleanup-preview:
+    name: Cleanup Preview Deployment
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' && github.event.action == 'closed'
+    
+    steps:
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Delete preview Cloud Run service
+        run: |
+          PR_NUMBER=${{ github.event.pull_request.number }}
+          SERVICE_NAME="novara-preview-pr-$PR_NUMBER"
+          
+          echo "🧹 Cleaning up preview deployment for PR #$PR_NUMBER"
+          
+          # Check if service exists before trying to delete
+          if gcloud run services describe $SERVICE_NAME \
+            --region ${{ env.REGION }} \
+            --quiet 2>/dev/null; then
+            gcloud run services delete $SERVICE_NAME \
+              --region ${{ env.REGION }} \
+              --quiet
+            echo "✅ Deleted preview service: $SERVICE_NAME"
+          else
+            echo "ℹ️  Preview service $SERVICE_NAME not found (may have been already deleted)"
+          fi
+
+      - name: Clean up old preview images
+        run: |
+          PR_NUMBER=${{ github.event.pull_request.number }}
+          IMAGE_PREFIX="${{ env.REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY }}/novara:preview-pr-$PR_NUMBER-"
+          
+          echo "🧹 Cleaning up preview images for PR #$PR_NUMBER"
+          
+          # List and delete images matching this PR
+          gcloud artifacts docker images list $IMAGE_PREFIX \
+            --format="value(PACKAGE)" \
+            --quiet 2>/dev/null | while read image; do
+            if [ -n "$image" ]; then
+              echo "Deleting image: $image"
+              gcloud artifacts docker images delete $image --quiet --delete-tags || true
+            fi
+          done || echo "ℹ️  No preview images found to clean up"
 
