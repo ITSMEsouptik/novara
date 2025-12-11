@@ -1,0 +1,241 @@
+{
+  "hero": {
+    "headline": "Turn your website link into a month of",
+    "headlineHighlight": "video ads",
+    "headlineSecondary": "In minutes.",
+    "subheadline": "No agencies. No filming. No learning curve. Just paste your URL. We turn your existing content into professional video & static ads engineered to sell.",
+    "inputPlaceholder": "Paste your website URL here...",
+    "ctaButtonText": "Create My Ads",
+    "secondaryButtonText": "View Examples"
+  },
+  "mirror": {
+    "title": "Sound familiar?",
+    "cards": [
+      {
+        "title": "The Agency Trap",
+        "text": "You got a quote for $1,500 just to make one video. You didn't reply because that's your rent money."
+      },
+      {
+        "title": "The DIY Nightmare",
+        "text": "You spent Sunday night fighting with Canva. It took 4 hours, looked amateur, and nobody liked it."
+      },
+      {
+        "title": "The Visibility Gap",
+        "text": "Your competitors are popping up on everyone's TikTok and Reels. You are invisible."
+      }
+    ],
+    "closingStatement": "It's not your fault. The game was rigged against small teams. Until now."
+  },
+  "howItWorks": {
+    "title": "We don't need your footage. We need your URL.",
+    "steps": [
+      {
+        "iconName": "eye",
+        "title": "The Scan",
+        "text": "Our AI reads your website like a senior marketer/CMO. It learns your brand colors, best-sellers, and tone of voice instantly."
+      },
+      {
+        "iconName": "lightning",
+        "title": "The Strategy",
+        "text": "We don't just guess. Our engine analyzes top-performing ads in your niche to engineer creative strategies predicted to convert."
+      },
+      {
+        "iconName": "box",
+        "title": "The Delivery",
+        "text": "Minutes later, you get a folder. Vertical videos for Reels/TikTok. Banners for FB/Google. Ready to launch."
+      }
+    ]
+  },
+  "intelligence": {
+    "title": "We analyzed 100,000+ winning ads. So you don't have to.",
+    "subtitle": "Most admakers guess what \"looks pretty.\" Novara engineers what sells.",
+    "pillars": [
+      {
+        "iconName": "search",
+        "title": "The Trend Watcher",
+        "text": "Our engine tracks what's working right now on TikTok and Reels. We use the audio tracks, pacing, and structures that the algorithms are currently pushing."
+      },
+      {
+        "iconName": "target",
+        "title": "The Niche Expert",
+        "text": "Selling coffee is different from selling plumbing. We benchmark your brand against the top 1% of competitors in your specific industry to see what offers are converting."
+      },
+      {
+        "iconName": "brain",
+        "title": "The Psychological Hook",
+        "text": "We don't just cut clips. We structure every video with a \"Pattern Interrupt\" in the first 3 seconds to stop the scroll, followed by a psychological value anchor."
+      }
+    ]
+  },
+  "trophy": {
+    "title": "What $79 actually buys you.",
+    "subtitle": "Based on our analysis of your market, we generate the 3 specific video types your business needs to grow:",
+    "videoTypes": [
+      {
+        "title": "Video A: The Viral Hook",
+        "subtitle": "Maximize Views"
+      },
+      {
+        "title": "Video B: The Trust Builder",
+        "subtitle": "Maximize Clicks"
+      },
+      {
+        "title": "Video C: The Sales Closer",
+        "subtitle": "Maximize ROI"
+      },
+      {
+        "title": "The Retargeting Stack",
+        "subtitle": "10 Static Banners (Square & Landscape)"
+      }
+    ],
+    "guarantee": {
+      "title": "100% Brand-Safe Guarantee",
+      "text": "We match your fonts, logos, and colors perfectly. If it doesn't look like you, we fix it for free."
+    },
+    "galleryRow1": [
+      {
+        "url": "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&h=300&fit=crop",
+        "type": "image",
+        "title": "E-commerce Product"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=400&h=300&fit=crop",
+        "type": "image",
+        "title": "Fashion Ad"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400&h=300&fit=crop",
+        "type": "image",
+        "title": "Lifestyle Product"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=300&fit=crop",
+        "type": "image",
+        "title": "Tech Product"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1567427017947-545c5f8d16ad?w=400&h=300&fit=crop",
+        "type": "image",
+        "title": "Beauty Product"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1611224923853-80b023f02d71?w=400&h=300&fit=crop",
+        "type": "image",
+        "title": "Food Product"
+      }
+    ],
+    "galleryRow2": [
+      {
+        "url": "https://videos.pexels.com/video-files/3044129/3044129-sd_640_360_30fps.mp4",
+        "type": "video",
+        "title": "Product Showcase"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1556740758-90de374c12ad?w=400&h=300&fit=crop",
+        "type": "image",
+        "title": "Brand Banner"
+      },
+      {
+        "url": "https://videos.pexels.com/video-files/3045163/3045163-sd_640_360_25fps.mp4",
+        "type": "video",
+        "title": "Social Media Ad"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&h=300&fit=crop",
+        "type": "image",
+        "title": "Product Shot"
+      },
+      {
+        "url": "https://videos.pexels.com/video-files/856870/856870-sd_640_360_25fps.mp4",
+        "type": "video",
+        "title": "Marketing Video"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=300&fit=crop",
+        "type": "image",
+        "title": "Headphones Ad"
+      }
+    ],
+    "galleryRow3": [
+      {
+        "url": "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&h=300&fit=crop",
+        "type": "image",
+        "title": "Shoe Product"
+      },
+      {
+        "url": "https://videos.pexels.com/video-files/857195/857195-sd_640_360_25fps.mp4",
+        "type": "video",
+        "title": "Brand Video"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=400&h=300&fit=crop",
+        "type": "image",
+        "title": "Camera Ad"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1585386959984-a4155224a1ad?w=400&h=300&fit=crop",
+        "type": "image",
+        "title": "Perfume Ad"
+      },
+      {
+        "url": "https://videos.pexels.com/video-files/3044129/3044129-sd_640_360_30fps.mp4",
+        "type": "video",
+        "title": "Promo Video"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=400&h=300&fit=crop",
+        "type": "image",
+        "title": "Sunglasses"
+      }
+    ]
+  },
+  "offer": {
+    "title": "Cheaper than a failed \"Boost Post.\"",
+    "packageName": "The Pilot Pack",
+    "packageSubtitle": "Perfect for your first campaign.",
+    "price": "$79",
+    "priceNote": "One-time payment. No subscription.",
+    "features": [
+      "5x Strategic Video Variations",
+      "10x Static Ad Banners",
+      "Professional Copywriting & Report",
+      "24-Hour Turnaround"
+    ],
+    "ctaButtonText": "Make Me Visible"
+  },
+  "faq": {
+    "title": "Common Questions",
+    "items": [
+      {
+        "question": "Do I need to film anything?",
+        "answer": "No. We use the images and footage already on your website or stock assets that match your brand vibe perfectly."
+      },
+      {
+        "question": "I don't know how to run ads.",
+        "answer": "We give you the files ready to upload. We also send a simple 2-minute guide on how to launch them on Facebook/Instagram."
+      },
+      {
+        "question": "What if I don't like them?",
+        "answer": "We offer one free round of revisions to tweak text, colors, or music. We want you to launch."
+      }
+    ]
+  },
+  "footer": {
+    "copyright": "© 2025 Novara. All rights reserved.",
+    "description": "Building the Fully Autonomous AI Ad Agency. Powered by Novara Ad Orchestrator — integrating Predictive Market Intelligence with Strategic Creative Direction.",
+    "links": [
+      {
+        "text": "Support",
+        "href": "#support"
+      },
+      {
+        "text": "Terms",
+        "href": "#terms"
+      },
+      {
+        "text": "Investor Inquiries",
+        "href": "#investors"
+      }
+    ]
+  }
+}

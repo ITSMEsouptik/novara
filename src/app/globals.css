@@ -96,3 +96,36 @@ body {
   padding: 0 0.2em;
   border-radius: 4px;
 }
+
+/* Infinite scroll animations */
+@keyframes scroll-left {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-33.333%);
+  }
+}
+
+@keyframes scroll-right {
+  0% {
+    transform: translateX(-33.333%);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+.animate-scroll-left {
+  animation: scroll-left 25s linear infinite;
+}
+
+.animate-scroll-right {
+  animation: scroll-right 25s linear infinite;
+}
+
+/* Pause animation on hover */
+.animate-scroll-left:hover,
+.animate-scroll-right:hover {
+  animation-play-state: paused;
+}
