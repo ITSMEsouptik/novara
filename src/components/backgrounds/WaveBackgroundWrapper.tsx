@@ -25,12 +25,22 @@ export function WaveBackgroundWrapper({ className = "" }: WaveBackgroundWrapperP
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    setIsMounted(true);
+    // Use setTimeout to avoid synchronous setState in effect
+    const timer1 = setTimeout(() => {
+      setIsMounted(true);
+    }, 0);
     
     // Check WebGL support
     const canvas = document.createElement("canvas");
     const gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
-    setIsWebGLSupported(!!gl);
+    const timer2 = setTimeout(() => {
+      setIsWebGLSupported(!!gl);
+    }, 0);
+    
+    return () => {
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+    };
   }, []);
 
   // Don't render on server

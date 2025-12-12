@@ -5,17 +5,12 @@ import { HeroContent } from "@/lib/content";
 
 interface HeroProps {
   content: HeroContent;
-  /** Optional Tina field path for visual editing */
-  tinaField?: (field: string) => string;
 }
 
-export const Hero = ({ content, tinaField }: HeroProps) => {
-  // Helper function that returns data-tina-field if tinaField is provided
-  const getFieldAttr = (field: string) => 
-    tinaField ? { "data-tina-field": tinaField(field) } : {};
+export const Hero = ({ content }: HeroProps) => {
 
   return (
-    <section className="relative min-h-[90vh] flex flex-col justify-center items-center px-6 py-20 text-center animate-fadeInUp overflow-hidden">
+    <section className="relative min-h-[90vh] flex flex-col justify-center items-center px-6 pt-24 pb-20 text-center animate-fadeInUp overflow-hidden">
       {/* Glassmorphic Background Overlay */}
       <div className="absolute inset-0 bg-gradient-to-br from-white/70 via-white/50 to-gray-50/70 backdrop-blur-sm z-[1]"></div>
 
@@ -30,15 +25,13 @@ export const Hero = ({ content, tinaField }: HeroProps) => {
       <div className="relative z-10 max-w-[900px] w-full">
         <h1 
           className="text-4xl md:text-[64px] font-bold leading-[1.2] text-brand-text mb-6 max-w-[900px] mx-auto"
-          {...getFieldAttr("hero.headline")}
         >
-          {content.headline} <span className="highlight" {...getFieldAttr("hero.headlineHighlight")}>{content.headlineHighlight}</span>.<br />
-          <span className="block mt-2" {...getFieldAttr("hero.headlineSecondary")}>{content.headlineSecondary}</span>
+          {content.headline} <span className="highlight">{content.headlineHighlight}</span>.<br />
+          <span className="block mt-2">{content.headlineSecondary}</span>
         </h1>
         
         <p 
           className="text-base md:text-xl text-brand-textSecondary max-w-[600px] mx-auto mb-10 leading-relaxed"
-          {...getFieldAttr("hero.subheadline")}
         >
           {content.subheadline}
         </p>

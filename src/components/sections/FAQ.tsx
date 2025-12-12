@@ -25,7 +25,7 @@ export const FAQ = ({ content }: FAQProps) => {
           {content.items.map((item, idx) => (
             <div 
               key={idx} 
-              className={`group glass rounded-xl overflow-hidden transition-all duration-300 border border-gray-200/50 ${
+              className={`group glass rounded-xl overflow-hidden transition-all duration-300 ${
                 openIndex === idx 
                   ? 'shadow-xl shadow-gray-500/10 scale-[1.01]' 
                   : 'shadow-md hover:shadow-lg'

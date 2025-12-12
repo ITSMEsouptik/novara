@@ -19,7 +19,7 @@ export const Offer = ({ content }: OfferProps) => {
         <h2 className="text-3xl md:text-5xl font-bold mb-12 text-brand-text">{content.title}</h2>
         
         {/* Premium Pricing Card */}
-        <div className="relative glass-strong rounded-3xl shadow-2xl p-10 max-w-[550px] mx-auto animate-slideUp border border-gray-200/50 hover:shadow-gray-500/20 transition-all duration-300 hover:scale-[1.02]">
+        <div className="relative glass-strong rounded-3xl shadow-2xl p-10 max-w-[550px] mx-auto animate-slideUp hover:shadow-gray-500/20 transition-all duration-300 hover:scale-[1.02]">
           {/* Subtle background overlay */}
           <div className="absolute inset-0 rounded-3xl bg-gray-900/2 pointer-events-none"></div>
           

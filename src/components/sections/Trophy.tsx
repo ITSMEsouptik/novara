@@ -119,7 +119,7 @@ export const Trophy = ({ content }: TrophyProps) => {
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
           {/* Gallery Side */}
-          <div className="h-[400px] md:h-[520px] rounded-2xl shadow-xl relative overflow-hidden bg-gradient-to-br from-gray-50 via-gray-100 to-gray-50 p-4 flex flex-col gap-3 border border-gray-200/50">
+          <div className="h-[400px] md:h-[520px] rounded-2xl shadow-xl relative overflow-hidden glass p-4 flex flex-col gap-3">
             <ScrollingRow items={content.galleryRow1} direction="left" />
             <ScrollingRow items={content.galleryRow2} direction="right" />
             <ScrollingRow items={content.galleryRow3} direction="left" />
@@ -141,7 +141,7 @@ export const Trophy = ({ content }: TrophyProps) => {
                 </div>
               ))}
             </div>
-            <div className="glass-strong border border-gray-200/50 rounded-xl p-6 flex gap-4 mt-8 shadow-lg hover:shadow-xl transition-all hover:scale-[1.02]">
+            <div className="glass-strong rounded-xl p-6 flex gap-4 mt-8 shadow-lg hover:shadow-xl transition-all hover:scale-[1.02]">
               <div className="text-brand-text flex-shrink-0">
                 <ShieldIcon className="w-8 h-8" />
               </div>

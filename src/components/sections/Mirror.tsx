@@ -24,7 +24,7 @@ export const Mirror = ({ content }: MirrorProps) => {
               style={{ animationDelay: `${idx * 100}ms` }}
             >
               {/* Subtle overlay on hover */}
-              <div className="absolute inset-0 rounded-2xl bg-gray-900/0 group-hover:bg-gray-900/2 transition-all duration-300 pointer-events-none"></div>
+              <div className="absolute inset-0 rounded-2xl bg-gray-900/0 group-hover:bg-gray-900/2 transition-all duration-300 pointer-events-none z-0"></div>
               
               {/* Content */}
               <div className="relative z-10">

@@ -70,12 +70,16 @@ function generateShapes(count: number): ShapeConfig[] {
 
 function Shape({ config, scrollOffset }: { config: ShapeConfig; scrollOffset: number }) {
   const meshRef = useRef<Mesh>(null);
-  const materialRef = useRef<MeshStandardMaterial>(null);
   
   // Initial position and rotation
   const currentPosition = useRef([...config.position]);
   const currentRotation = useRef([...config.rotation]);
-  const timeOffset = useRef(Math.random() * Math.PI * 2);
+  const timeOffset = useRef(0);
+  
+  // Initialize timeOffset in useEffect to avoid calling Math.random during render
+  useEffect(() => {
+    timeOffset.current = Math.random() * Math.PI * 2;
+  }, []);
   
   // Set initial scale
   useEffect(() => {
@@ -84,7 +88,7 @@ function Shape({ config, scrollOffset }: { config: ShapeConfig; scrollOffset: nu
     }
   }, [config.size]);
   
-  useFrame((state, delta) => {
+  useFrame((state) => {
     if (!meshRef.current) return;
     
     const time = state.clock.elapsedTime + timeOffset.current;

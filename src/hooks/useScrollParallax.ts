@@ -16,15 +16,19 @@ export function useScrollParallax(): ScrollParallax {
   const [scrollDirection, setScrollDirection] = useState(0);
   const [wavePhaseOffset, setWavePhaseOffset] = useState(0);
   const prevScrollY = useRef(0);
-  const lastScrollTime = useRef(Date.now());
+  const lastScrollTime = useRef(0);
   const resetTimerRef = useRef<NodeJS.Timeout | null>(null);
   const resetIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const phaseOffsetRef = useRef(0);
   const animationFrameRef = useRef<number | null>(null);
   const scrollDirectionRef = useRef(0);
-  const lastAnimationTime = useRef(Date.now());
+  const lastAnimationTime = useRef(0);
 
   useEffect(() => {
+    // Initialize time values in useEffect to avoid calling Date.now() during render
+    const now = Date.now();
+    lastScrollTime.current = now;
+    lastAnimationTime.current = now;
     let ticking = false;
     const WAVE_SPEED = 0.8; // Speed of wave phase accumulation
     const RESET_DELAY = 3000; // 3 seconds in milliseconds
