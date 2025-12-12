@@ -3,8 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "tinacms dev -c \"next dev\"",
+    "dev:next": "next dev",
     "build": "next build",
+    "build:tina": "tinacms build && next build",
     "start": "next start",
     "lint": "eslint",
     "test": "jest",
@@ -17,6 +19,7 @@
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.4.2",
     "@supabase/supabase-js": "^2.84.0",
+    "@tinacms/cli": "^2.0.2",
     "@types/archiver": "^7.0.0",
     "@types/pg": "^8.15.6",
     "archiver": "^7.0.1",
@@ -28,7 +31,8 @@
     "react": "19.2.0",
     "react-dom": "19.2.0",
     "tailwind-merge": "^3.4.0",
-    "three": "^0.181.2"
+    "three": "^0.181.2",
+    "tinacms": "^3.0.2"
   },
   "devDependencies": {
     "@playwright/test": "^1.56.1",
