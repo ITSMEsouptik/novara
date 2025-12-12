@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { storage } from '@/lib/storage';
 
 export async function POST(request: NextRequest) {
     const secret = request.headers.get('x-n8n-secret');
@@ -17,19 +17,19 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Missing job_id' }, { status: 400 });
         }
 
-        const { error } = await supabase
-            .from('ad_jobs')
-            .update({
+        try {
+            await storage.updateJob(job_id, {
                 status: 'completed',
-                video_url: video_url || null,
+                video_url: video_url || undefined,
                 completed_at: new Date().toISOString(),
                 n8n_raw: rest,
-            })
-            .eq('job_id', job_id);
-
-        if (error) {
-            console.error('Supabase update error:', error);
-            return NextResponse.json({ error: 'Failed to update job' }, { status: 500 });
+            });
+        } catch (error) {
+            console.error('Storage update error:', error);
+            return NextResponse.json(
+                { error: 'Failed to update job', details: error instanceof Error ? error.message : String(error) },
+                { status: 500 }
+            );
         }
 
         return NextResponse.json({ success: true });

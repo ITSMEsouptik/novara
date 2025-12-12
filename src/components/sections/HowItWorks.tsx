@@ -13,8 +13,14 @@ const iconMap = {
 
 export const HowItWorks = ({ content }: HowItWorksProps) => {
   return (
-    <section id="how-it-works" className="py-20 px-6 bg-brand-background">
-      <div className="max-w-[700px] mx-auto">
+    <section id="how-it-works" className="relative py-20 px-6 overflow-hidden">
+      {/* Glassmorphic Background Overlay */}
+      <div className="absolute inset-0 bg-gradient-to-b from-white/60 via-white/50 to-white/60 backdrop-blur-md z-[1]"></div>
+      
+      {/* Background decoration */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_50%,rgba(0,0,0,0.02),transparent_50%)] z-[1]"></div>
+      
+      <div className="relative max-w-[700px] mx-auto z-10">
         <h2 className="text-3xl md:text-5xl font-bold text-center mb-16 text-brand-text">
           {content.title}
         </h2>
@@ -22,14 +28,23 @@ export const HowItWorks = ({ content }: HowItWorksProps) => {
           {content.steps.map((step, idx) => (
             <div key={idx} className="flex gap-6 relative group">
               {idx !== content.steps.length - 1 && (
-                  <div className="absolute left-[30px] top-20 bottom-[-30px] w-0.5 bg-brand-borderSecondary hidden md:block"></div>
+                <div className="absolute left-[30px] top-20 bottom-[-48px] w-0.5 bg-gradient-to-b from-gray-300 via-gray-200 to-transparent hidden md:block opacity-30 group-hover:opacity-60 transition-opacity"></div>
               )}
               
-              <div className="w-[60px] h-[60px] bg-brand-bg2 rounded-lg flex items-center justify-center flex-shrink-0">
-                {iconMap[step.iconName]}
+              {/* Enhanced icon container */}
+              <div className="relative flex-shrink-0">
+                <div className="w-[70px] h-[70px] bg-brand-bg2 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl group-hover:scale-110 transition-all duration-300 border border-brand-border group-hover:border-gray-400">
+                  <div className="text-brand-text group-hover:text-gray-700 group-hover:scale-110 transition-all duration-300">
+                    {iconMap[step.iconName]}
+                  </div>
+                </div>
               </div>
-              <div>
-                <h3 className="text-xl font-bold mb-2 text-brand-text">{step.title}</h3>
+              
+              {/* Content */}
+              <div className="flex-1 pt-1">
+                <h3 className="text-xl font-bold mb-3 text-brand-text group-hover:text-gray-700 transition-colors">
+                  {step.title}
+                </h3>
                 <p className="text-brand-textSecondary text-base leading-relaxed">{step.text}</p>
               </div>
             </div>

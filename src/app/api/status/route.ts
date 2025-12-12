@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { storage } from '@/lib/storage';
 
 export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
@@ -9,16 +9,19 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: 'Missing job_id' }, { status: 400 });
     }
 
-    const { data, error } = await supabase
-        .from('ad_jobs')
-        .select('job_id, status, video_url, created_at, completed_at')
-        .eq('job_id', jobId)
-        .single();
+    try {
+        const job = await storage.getJob(jobId);
 
-    if (error) {
+        if (!job) {
+            return NextResponse.json({ error: 'Job not found' }, { status: 404 });
+        }
+
+        return NextResponse.json(job);
+    } catch (error) {
         console.error('Status fetch error:', error);
-        return NextResponse.json({ error: 'Job not found' }, { status: 404 });
+        return NextResponse.json(
+            { error: 'Failed to fetch job', details: error instanceof Error ? error.message : String(error) },
+            { status: 500 }
+        );
     }
-
-    return NextResponse.json(data);
 }

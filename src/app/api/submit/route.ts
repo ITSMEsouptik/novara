@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { storage } from '@/lib/storage';
 import FormData from 'form-data';
 
 export async function POST(request: NextRequest) {
@@ -7,33 +7,49 @@ export async function POST(request: NextRequest) {
         const formData = await request.formData();
 
         // Extract fields for Supabase
-        const payload: Record<string, string | { name: string; size: number; type: string }> = {};
+        const payload: Record<string, string | { name: string; size: number; type: string } | Array<{ name: string; size: number; type: string }>> = {};
+        const uploadedAssets: Array<{ name: string; size: number; type: string }> = [];
+        
         formData.forEach((value, key) => {
-            // simple handling: if multiple values, might overwrite. 
-            // For this app, we assume simple fields except files.
             if (typeof value === 'string') {
                 payload[key] = value;
-            } else {
-                // It's a file. We don't store file content in JSON payload, maybe just metadata.
-                payload[key] = { name: (value as File).name, size: (value as File).size, type: (value as File).type };
+            } else if (value instanceof File) {
+                // Handle file metadata
+                const fileMeta = { name: value.name, size: value.size, type: value.type };
+                if (key === 'uploaded_assets') {
+                    // Collect multiple files as an array
+                    uploadedAssets.push(fileMeta);
+                } else {
+                    payload[key] = fileMeta;
+                }
             }
         });
+        
+        // Add uploaded assets array to payload if any files were uploaded
+        if (uploadedAssets.length > 0) {
+            payload.uploaded_assets = uploadedAssets;
+        }
+
+        // Add analysis status to payload
+        payload.analysis_status = 'pending';
 
         // Generate Job ID (using UUID or timestamp)
         const jobId = crypto.randomUUID();
 
-        // Insert into Supabase
-        const { error: dbError } = await supabase
-            .from('ad_jobs')
-            .insert({
+        // Create job using storage abstraction
+        try {
+            await storage.createJob({
                 job_id: jobId,
                 status: 'submitted',
+                created_at: new Date().toISOString(),
                 payload: payload,
             });
-
-        if (dbError) {
-            console.error('Supabase error:', dbError);
-            return NextResponse.json({ error: 'Failed to create job' }, { status: 500 });
+        } catch (error) {
+            console.error('Storage error:', error);
+            return NextResponse.json(
+                { error: 'Failed to create job', details: error instanceof Error ? error.message : String(error) },
+                { status: 500 }
+            );
         }
 
         // Forward to n8n
@@ -81,6 +97,39 @@ export async function POST(request: NextRequest) {
             console.error('n8n error:', n8nError);
             // We still return success to user because job is saved, but maybe mark status as failed?
             // For now, let's assume it works or we log it.
+        }
+
+        // Trigger async analysis (fire and forget - don't await)
+        // Extract form data for analysis
+        const url = payload.url as string;
+        const serviceArea = payload.service_area as string;
+        const goal = payload.goal as string;
+
+        if (url && serviceArea && goal) {
+            // Use internal API call or direct function call for better reliability
+            // In server-side Next.js, we can import directly
+            (async () => {
+                try {
+                    const { performDeepAnalysis } = await import('@/lib/analysis-service');
+                    await performDeepAnalysis(jobId, url, serviceArea, goal);
+                } catch (error) {
+                    console.error(`[Submit] Failed to trigger analysis for job ${jobId}:`, error);
+                    // Update status to failed if analysis couldn't start
+                    try {
+                        const existingJob = await storage.getJob(jobId);
+                        const currentPayload = existingJob?.payload || payload;
+                        await storage.updateJob(jobId, {
+                            payload: {
+                                ...currentPayload,
+                                analysis_status: 'failed',
+                                analysis_errors: { startup: error instanceof Error ? error.message : String(error) },
+                            }
+                        });
+                    } catch (updateError) {
+                        console.error(`[Submit] Failed to update error status for job ${jobId}:`, updateError);
+                    }
+                }
+            })();
         }
 
         return NextResponse.json({ job_id: jobId });

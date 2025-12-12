@@ -148,4 +148,3 @@ export function getFAQContent(): FAQContent {
 export function getFooterContent(): FooterContent {
   return homeContent.footer as FooterContent;
 }
-

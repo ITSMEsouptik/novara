@@ -4,6 +4,14 @@ import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Upload, X, Loader2, ArrowRight } from 'lucide-react';
 import clsx from 'clsx';
+import { Header } from '@/components/sections/Header';
+
+const CAMPAIGN_GOALS = [
+    { value: 'get_more_sales', label: 'Get More Sales / Orders', description: 'Focus: Offers, Products' },
+    { value: 'get_more_bookings', label: 'Get More Bookings / Leads', description: 'Focus: Trust, Service' },
+    { value: 'build_awareness', label: 'Build Brand Awareness', description: 'Focus: Viral, Story' },
+    { value: 'promote_event', label: 'Promote an Event / Launch', description: 'Focus: Urgency, Dates' },
+];
 
 export default function CreatePage() {
     const router = useRouter();
@@ -12,13 +20,11 @@ export default function CreatePage() {
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const [formData, setFormData] = useState({
-        website: '',
-        productUrl: '',
-        productDescription: '',
-        brief: '',
-        targetAudience: '',
-        painPoint: '',
-        campaignGoal: '',
+        url: '',
+        serviceArea: '',
+        goal: '',
+        name: '',
+        email: '',
     });
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -37,16 +43,14 @@ export default function CreatePage() {
 
         try {
             const data = new FormData();
-            data.append('Website ', formData.website); // Note: n8n workflow expects "Website " (with space?) - checking prompt spec: "Website "
-            data.append('Product Url ', formData.productUrl);
-            data.append('Product Description', formData.productDescription);
-            data.append('Brief ', formData.brief);
-            data.append('Target Audience ', formData.targetAudience);
-            data.append('Pain Point ', formData.painPoint);
-            data.append('Campaign Goal ', formData.campaignGoal);
+            data.append('url', formData.url);
+            data.append('service_area', formData.serviceArea);
+            data.append('goal', formData.goal);
+            data.append('name', formData.name);
+            data.append('email', formData.email);
 
             files.forEach((file) => {
-                data.append('Product Images ', file);
+                data.append('uploaded_assets', file);
             });
 
             const res = await fetch('/api/submit', {
@@ -67,86 +71,115 @@ export default function CreatePage() {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-            <div className="max-w-3xl mx-auto">
-                <div className="text-center mb-12">
-                    <h1 className="text-4xl font-bold text-gray-900 tracking-tight">Create New Campaign</h1>
-                    <p className="mt-2 text-lg text-gray-600">Generate high-converting video ads in minutes.</p>
-                </div>
+        <>
+            {/* Fixed Header */}
+            <Header />
+            
+            <div className="relative min-h-screen bg-brand-background py-12 px-4 sm:px-6 lg:px-8">
+                {/* Glassmorphic Background Overlay */}
+                <div className="absolute inset-0 bg-gradient-to-b from-white/60 via-white/50 to-white/60 backdrop-blur-md z-[1]"></div>
+                
+                {/* Background decoration */}
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,0,0,0.02),transparent_70%)] z-[1]"></div>
+                
+                <div className="relative max-w-3xl mx-auto z-10">
+                    <div className="text-center mb-12">
+                        <h1 className="text-4xl font-bold text-brand-text tracking-tight">Create New Campaign</h1>
+                        <p className="mt-2 text-lg text-brand-textSecondary">Generate high-converting video ads in minutes.</p>
+                    </div>
 
-                <div className="bg-white shadow-xl rounded-2xl overflow-hidden">
+                    <div className="glass shadow-xl rounded-2xl overflow-hidden">
                     <form onSubmit={handleSubmit} className="p-8 space-y-8">
 
-                        {/* Section 1: Product Info */}
-                        <div className="space-y-6">
-                            <h2 className="text-xl font-semibold text-gray-800 border-b pb-2">Product Details</h2>
+                        {/* Website URL */}
+                        <div>
+                            <label className="block text-sm font-medium text-brand-text mb-1">
+                                Website URL <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                                required
+                                type="url"
+                                className="w-full px-4 py-2 glass rounded-lg focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary transition-colors text-brand-text placeholder:text-gray-400"
+                                placeholder="https://www.example.com"
+                                value={formData.url}
+                                onChange={(e) => setFormData({ ...formData, url: e.target.value })}
+                            />
+                        </div>
 
-                            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Website URL</label>
-                                    <input
-                                        required
-                                        type="url"
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                                        placeholder="https://example.com"
-                                        value={formData.website}
-                                        onChange={(e) => setFormData({ ...formData, website: e.target.value })}
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Product URL</label>
-                                    <input
-                                        required
-                                        type="url"
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                                        placeholder="https://example.com/product"
-                                        value={formData.productUrl}
-                                        onChange={(e) => setFormData({ ...formData, productUrl: e.target.value })}
-                                    />
-                                </div>
-                            </div>
+                        {/* Service Area */}
+                        <div>
+                            <label className="block text-sm font-medium text-brand-text mb-1">
+                                Where Do You Sell? <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                                required
+                                type="text"
+                                className="w-full px-4 py-2 glass rounded-lg focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary transition-colors text-brand-text placeholder:text-gray-400"
+                                placeholder="City, State, or Global (e.g., Chicago, IL or Global)"
+                                value={formData.serviceArea}
+                                onChange={(e) => setFormData({ ...formData, serviceArea: e.target.value })}
+                            />
+                            <p className="mt-1 text-xs text-gray-500">Enter your service area (City, State, or Global)</p>
+                        </div>
 
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Product Description</label>
-                                <textarea
-                                    required
-                                    rows={3}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                                    placeholder="Describe your product..."
-                                    value={formData.productDescription}
-                                    onChange={(e) => setFormData({ ...formData, productDescription: e.target.value })}
+                        {/* Campaign Goal */}
+                        <div>
+                            <label className="block text-sm font-medium text-brand-text mb-1">
+                                Campaign Goal <span className="text-red-500">*</span>
+                            </label>
+                            <select
+                                required
+                                className="w-full px-4 py-2 glass rounded-lg focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary transition-colors text-brand-text"
+                                value={formData.goal}
+                                onChange={(e) => setFormData({ ...formData, goal: e.target.value })}
+                            >
+                                <option value="">Select a campaign goal</option>
+                                {CAMPAIGN_GOALS.map((goal) => (
+                                    <option key={goal.value} value={goal.value}>
+                                        {goal.label} - {goal.description}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {/* Upload Assets */}
+                        <div>
+                            <label className="block text-sm font-medium text-brand-text mb-1">
+                                Brand Files <span className="text-gray-400 text-xs font-normal">(optional)</span>
+                            </label>
+                            <div
+                                onClick={() => fileInputRef.current?.click()}
+                                className="border-2 border-dashed border-gray-300/50 rounded-xl p-8 text-center hover:border-brand-primary/50 hover:bg-white/30 transition-all cursor-pointer group glass"
+                            >
+                                <Upload className="mx-auto h-10 w-10 text-brand-textSecondary group-hover:text-brand-primary transition-colors" />
+                                <p className="mt-2 text-sm font-medium text-brand-text">Upload Logo & Product/Vibe Photos</p>
+                                <p className="text-xs text-gray-500 mt-2">Upload your Logo (PNG) and 3-5 best product photos. We&apos;ll use these in your ads.</p>
+                                <p className="text-xs text-gray-400 mt-1">PNG, JPG up to 10MB each</p>
+                                <input
+                                    type="file"
+                                    ref={fileInputRef}
+                                    className="hidden"
+                                    multiple
+                                    accept="image/*"
+                                    onChange={handleFileChange}
                                 />
                             </div>
 
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Product Images</label>
-                                <div
-                                    onClick={() => fileInputRef.current?.click()}
-                                    className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-blue-500 hover:bg-blue-50 transition-all cursor-pointer group"
-                                >
-                                    <Upload className="mx-auto h-10 w-10 text-gray-400 group-hover:text-blue-500 transition-colors" />
-                                    <p className="mt-2 text-sm text-gray-600">Click to upload or drag and drop</p>
-                                    <p className="text-xs text-gray-400 mt-1">PNG, JPG up to 10MB</p>
-                                    <input
-                                        type="file"
-                                        ref={fileInputRef}
-                                        className="hidden"
-                                        multiple
-                                        accept="image/*"
-                                        onChange={handleFileChange}
-                                    />
-                                </div>
-
-                                {files.length > 0 && (
-                                    <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-4">
+                            {files.length > 0 && (
+                                <div className="mt-4">
+                                    <p className="text-sm text-brand-textSecondary mb-2">Uploaded files ({files.length}):</p>
+                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                                         {files.map((file, idx) => (
-                                            <div key={idx} className="relative group aspect-square bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
+                                            <div key={idx} className="relative group aspect-square glass rounded-lg overflow-hidden">
                                                 {/* eslint-disable-next-line @next/next/no-img-element */}
                                                 <img
                                                     src={URL.createObjectURL(file)}
-                                                    alt="preview"
+                                                    alt={file.name}
                                                     className="w-full h-full object-cover"
                                                 />
+                                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                    <p className="text-xs text-white px-2 text-center truncate w-full">{file.name}</p>
+                                                </div>
                                                 <button
                                                     type="button"
                                                     onClick={(e) => { e.stopPropagation(); removeFile(idx); }}
@@ -157,60 +190,36 @@ export default function CreatePage() {
                                             </div>
                                         ))}
                                     </div>
-                                )}
-                            </div>
+                                </div>
+                            )}
                         </div>
 
-                        {/* Section 2: Campaign Strategy */}
-                        <div className="space-y-6">
-                            <h2 className="text-xl font-semibold text-gray-800 border-b pb-2">Campaign Strategy</h2>
-
+                        {/* Name & Email */}
+                        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Brief</label>
-                                <textarea
-                                    required
-                                    rows={2}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                                    placeholder="What is the main message?"
-                                    value={formData.brief}
-                                    onChange={(e) => setFormData({ ...formData, brief: e.target.value })}
-                                />
-                            </div>
-
-                            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Target Audience</label>
-                                    <input
-                                        required
-                                        type="text"
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                                        placeholder="e.g. Busy moms, Tech enthusiasts"
-                                        value={formData.targetAudience}
-                                        onChange={(e) => setFormData({ ...formData, targetAudience: e.target.value })}
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Pain Point</label>
-                                    <input
-                                        required
-                                        type="text"
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                                        placeholder="e.g. Not enough time"
-                                        value={formData.painPoint}
-                                        onChange={(e) => setFormData({ ...formData, painPoint: e.target.value })}
-                                    />
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Campaign Goal</label>
+                                <label className="block text-sm font-medium text-brand-text mb-1">
+                                    Name <span className="text-red-500">*</span>
+                                </label>
                                 <input
                                     required
                                     type="text"
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                                    placeholder="e.g. Brand Awareness, Conversions"
-                                    value={formData.campaignGoal}
-                                    onChange={(e) => setFormData({ ...formData, campaignGoal: e.target.value })}
+                                    className="w-full px-4 py-2 glass rounded-lg focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary transition-colors text-brand-text placeholder:text-gray-400"
+                                    placeholder="Your name"
+                                    value={formData.name}
+                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-brand-text mb-1">
+                                    Email Address <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                    required
+                                    type="email"
+                                    className="w-full px-4 py-2 glass rounded-lg focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary transition-colors text-brand-text placeholder:text-gray-400"
+                                    placeholder="your@email.com"
+                                    value={formData.email}
+                                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                 />
                             </div>
                         </div>
@@ -220,7 +229,7 @@ export default function CreatePage() {
                                 type="submit"
                                 disabled={isLoading}
                                 className={clsx(
-                                    "w-full flex items-center justify-center py-4 px-6 border border-transparent rounded-xl shadow-sm text-lg font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all",
+                                    "w-full flex items-center justify-center py-4 px-6 border border-transparent rounded-xl shadow-sm text-lg font-medium text-white bg-brand-primary hover:bg-brand-primaryHover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary/50 transition-all",
                                     isLoading && "opacity-75 cursor-not-allowed"
                                 )}
                             >
@@ -241,5 +250,6 @@ export default function CreatePage() {
                 </div>
             </div>
         </div>
+        </>
     );
 }
