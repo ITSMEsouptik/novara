@@ -45,29 +45,30 @@ export const Header = () => {
     <header 
       className={`sticky top-0 z-50 transition-all duration-300 ${
         isScrolled 
-          ? "bg-white/98 backdrop-blur-md shadow-sm" 
-          : "bg-white/95 backdrop-blur-sm"
-      } border-b border-brand-border`}
+          ? "glass-strong shadow-lg border-b border-gray-200/50" 
+          : "glass border-b border-brand-border/50"
+      }`}
     >
       <div className="max-w-[1200px] mx-auto px-6 py-4 flex justify-between items-center">
-        <Link href="/" className="hover:opacity-80 transition-opacity z-50" onClick={handleLinkClick}>
+        <Link href="/" className="hover:opacity-80 transition-all hover:scale-105 z-50" onClick={handleLinkClick}>
           <Logo />
         </Link>
         
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center gap-8">
+        <nav className="hidden md:flex items-center gap-6">
           {navLinks.map((link) => (
             <a
               key={link.href}
               href={link.href}
-              className="text-sm text-brand-textSecondary hover:text-brand-primary transition-colors"
+              className="text-sm text-brand-textSecondary hover:text-gray-700 transition-all duration-200 relative group px-2 py-1"
             >
               {link.label}
+              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gray-700 group-hover:w-full transition-all duration-300"></span>
             </a>
           ))}
           <Link 
             href="#" 
-            className="bg-brand-primary hover:bg-brand-primaryHover text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+            className="bg-brand-primary hover:bg-brand-primaryHover text-white text-sm font-medium px-5 py-2 rounded-lg transition-all hover:scale-105 shadow-md hover:shadow-lg"
           >
             Login
           </Link>
@@ -87,7 +88,7 @@ export const Header = () => {
         </button>
       </div>
 
-      {/* Mobile Menu Overlay */}
+        {/* Mobile Menu Overlay */}
       <div
         className={`fixed inset-0 top-[73px] md:hidden transition-all duration-300 ease-in-out z-40 ${
           isMobileMenuOpen
@@ -97,13 +98,13 @@ export const Header = () => {
       >
         {/* Backdrop */}
         <div
-          className="absolute inset-0 bg-black/20 backdrop-blur-sm"
+          className="absolute inset-0 bg-black/30 backdrop-blur-md"
           onClick={() => setIsMobileMenuOpen(false)}
         />
         
         {/* Mobile Menu Panel */}
         <div
-          className={`absolute top-0 left-0 right-0 bg-white border-b border-brand-border shadow-xl transition-transform duration-300 ease-in-out ${
+          className={`absolute top-0 left-0 right-0 glass-strong border-b border-gray-200/50 shadow-2xl transition-transform duration-300 ease-in-out ${
             isMobileMenuOpen ? "translate-y-0" : "-translate-y-full"
           }`}
         >
@@ -113,19 +114,20 @@ export const Header = () => {
                 key={link.href}
                 href={link.href}
                 onClick={handleLinkClick}
-                className="px-6 py-4 text-base font-medium text-brand-text hover:text-brand-primary hover:bg-brand-grayLight transition-all duration-200 border-b border-brand-border/50 last:border-b-0"
+                className="px-6 py-4 text-base font-medium text-brand-text hover:text-gray-700 hover:bg-gray-50/50 transition-all duration-200 border-b border-gray-100/30 last:border-b-0 relative group"
                 style={{
                   animationDelay: `${index * 50}ms`,
                 }}
               >
                 {link.label}
+                <span className="absolute left-0 top-0 bottom-0 w-1 bg-gray-700 opacity-0 group-hover:opacity-100 transition-opacity"></span>
               </a>
             ))}
-            <div className="px-6 pt-4 mt-2 border-t border-brand-border">
+            <div className="px-6 pt-4 mt-2 border-t border-gray-200/50">
               <Link
                 href="#"
                 onClick={handleLinkClick}
-                className="block w-full bg-brand-primary hover:bg-brand-primaryHover text-white text-sm font-medium px-4 py-3 rounded-lg transition-colors text-center"
+                className="block w-full bg-brand-primary hover:bg-brand-primaryHover text-white text-sm font-medium px-4 py-3 rounded-lg transition-all hover:scale-[1.02] shadow-lg text-center"
               >
                 Login
               </Link>
