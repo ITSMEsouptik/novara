@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import { CheckCircle, Loader2, AlertCircle, Download, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import clsx from 'clsx';
+import { Header } from '@/components/sections/Header';
 
 type JobStatus = 'submitted' | 'processing' | 'completed' | 'failed';
 
@@ -57,24 +58,40 @@ export default function JobPage() {
 
     if (error) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-                <div className="bg-white p-8 rounded-xl shadow-lg max-w-md w-full text-center">
-                    <AlertCircle className="mx-auto h-12 w-12 text-red-500 mb-4" />
-                    <h2 className="text-2xl font-bold text-gray-900 mb-2">Error</h2>
-                    <p className="text-gray-600 mb-6">{error}</p>
-                    <Link href="/create" className="text-blue-600 hover:underline font-medium">
-                        Create a new campaign
-                    </Link>
+            <>
+                <Header />
+                <div className="relative min-h-screen flex items-center justify-center bg-brand-background p-4">
+                    {/* Glassmorphic Background Overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-b from-white/60 via-white/50 to-white/60 backdrop-blur-md z-[1]"></div>
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,0,0,0.02),transparent_70%)] z-[1]"></div>
+                    
+                    <div className="relative glass p-8 rounded-xl shadow-lg max-w-md w-full text-center z-10">
+                        <AlertCircle className="mx-auto h-12 w-12 text-red-500 mb-4" />
+                        <h2 className="text-2xl font-bold text-brand-text mb-2">Error</h2>
+                        <p className="text-brand-textSecondary mb-6">{error}</p>
+                        <Link href="/create" className="text-brand-primary hover:underline font-medium">
+                            Create a new campaign
+                        </Link>
+                    </div>
                 </div>
-            </div>
+            </>
         );
     }
 
     if (!job) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-50">
-                <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-            </div>
+            <>
+                <Header />
+                <div className="relative min-h-screen flex items-center justify-center bg-brand-background">
+                    {/* Glassmorphic Background Overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-b from-white/60 via-white/50 to-white/60 backdrop-blur-md z-[1]"></div>
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,0,0,0.02),transparent_70%)] z-[1]"></div>
+                    
+                    <div className="relative z-10">
+                        <Loader2 className="h-8 w-8 animate-spin text-brand-primary" />
+                    </div>
+                </div>
+            </>
         );
     }
 
@@ -90,21 +107,31 @@ export default function JobPage() {
                 job.status === 'completed' ? 3 : 2; // 'failed' handled separately or falls through
 
     return (
-        <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-            <div className="max-w-4xl mx-auto">
-                <div className="mb-8">
-                    <Link href="/create" className="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors">
-                        <ArrowLeft className="h-4 w-4 mr-2" />
-                        Back to Create
-                    </Link>
-                </div>
+        <>
+            {/* Fixed Header */}
+            <Header />
+            
+            <div className="relative min-h-screen bg-brand-background py-12 px-4 sm:px-6 lg:px-8">
+                {/* Glassmorphic Background Overlay */}
+                <div className="absolute inset-0 bg-gradient-to-b from-white/60 via-white/50 to-white/60 backdrop-blur-md z-[1]"></div>
+                
+                {/* Background decoration */}
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,0,0,0.02),transparent_70%)] z-[1]"></div>
+                
+                <div className="relative max-w-4xl mx-auto z-10">
+                    <div className="mb-8">
+                        <Link href="/create" className="inline-flex items-center text-brand-textSecondary hover:text-brand-text transition-colors">
+                            <ArrowLeft className="h-4 w-4 mr-2" />
+                            Back to Create
+                        </Link>
+                    </div>
 
-                <div className="bg-white shadow-xl rounded-2xl overflow-hidden">
-                    <div className="p-8 border-b border-gray-100">
+                    <div className="glass shadow-xl rounded-2xl overflow-hidden">
+                    <div className="p-8 border-b border-gray-200/50">
                         <div className="flex items-center justify-between">
                             <div>
-                                <h1 className="text-2xl font-bold text-gray-900">Campaign #{job.job_id.slice(0, 8)}</h1>
-                                <p className="text-sm text-gray-500 mt-1">Created at {new Date(job.created_at).toLocaleString()}</p>
+                                <h1 className="text-2xl font-bold text-brand-text">Campaign #{job.job_id.slice(0, 8)}</h1>
+                                <p className="text-sm text-brand-textSecondary mt-1">Created at {new Date(job.created_at).toLocaleString()}</p>
                             </div>
                             <div className={clsx(
                                 "px-4 py-1 rounded-full text-sm font-medium capitalize",
@@ -121,8 +148,8 @@ export default function JobPage() {
                         {job.status === 'failed' ? (
                             <div className="text-center py-12">
                                 <AlertCircle className="mx-auto h-16 w-16 text-red-500 mb-4" />
-                                <h3 className="text-xl font-semibold text-gray-900">Generation Failed</h3>
-                                <p className="text-gray-600 mt-2">Something went wrong during the video generation process.</p>
+                                <h3 className="text-xl font-semibold text-brand-text">Generation Failed</h3>
+                                <p className="text-brand-textSecondary mt-2">Something went wrong during the video generation process.</p>
                             </div>
                         ) : job.status === 'completed' && job.video_url ? (
                             <div className="space-y-8">
@@ -143,7 +170,7 @@ export default function JobPage() {
                                         download
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                                        className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-brand-primary hover:bg-brand-primaryHover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary/50"
                                     >
                                         <Download className="mr-2 h-5 w-5" />
                                         Download Video
@@ -188,7 +215,7 @@ export default function JobPage() {
                                             })}
                                         </div>
                                     </div>
-                                    <p className="text-center text-gray-500 mt-8 animate-pulse">
+                                    <p className="text-center text-brand-textSecondary mt-8 animate-pulse">
                                         {job.status === 'submitted' ? 'Sending details to AI agent...' : 'AI is analyzing and generating video...'}
                                     </p>
                                 </div>
@@ -198,5 +225,6 @@ export default function JobPage() {
                 </div>
             </div>
         </div>
+        </>
     );
 }

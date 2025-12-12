@@ -32,7 +32,7 @@
       {
         "iconName": "eye",
         "title": "The Scan",
-        "text": "Our AI reads your website like a senior marketer/CMO. It learns your brand colors, best-sellers, and tone of voice instantly."
+        "text": "Our AI reads your website like a Chief Marketing Officer. It learns your brand colors, best-sellers, and tone of voice instantly."
       },
       {
         "iconName": "lightning",
@@ -68,7 +68,7 @@
     ]
   },
   "trophy": {
-    "title": "What $79 actually buys you.",
+    "title": "What $119 actually buys you.",
     "subtitle": "Based on our analysis of your market, we generate the 3 specific video types your business needs to grow:",
     "videoTypes": [
       {
@@ -94,97 +94,97 @@
     },
     "galleryRow1": [
       {
-        "url": "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&h=300&fit=crop",
+        "url": "https://storage.googleapis.com/novara-gemini-assets/Website%20Statics/Prompt_a_bright_202511301920.jpeg",
         "type": "image",
         "title": "E-commerce Product"
       },
       {
-        "url": "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=400&h=300&fit=crop",
+        "url": "https://storage.googleapis.com/novara-gemini-assets/Website%20Statics/Prompt_a_premium_202511301915.jpeg",
         "type": "image",
         "title": "Fashion Ad"
       },
       {
-        "url": "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400&h=300&fit=crop",
+        "url": "https://storage.googleapis.com/novara-gemini-assets/Website%20Statics/Loan_Advisory_2.jpeg",
         "type": "image",
         "title": "Lifestyle Product"
       },
       {
-        "url": "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=300&fit=crop",
+        "url": "https://storage.googleapis.com/novara-gemini-assets/gemini-images/AM_Structural_Consultancy_Ltd_STATIC_angle-1_meta_feed_v1.png",
         "type": "image",
         "title": "Tech Product"
       },
       {
-        "url": "https://images.unsplash.com/photo-1567427017947-545c5f8d16ad?w=400&h=300&fit=crop",
+        "url": "https://storage.googleapis.com/novara-gemini-assets/Website%20Statics/Dental_Clinic_5.jpeg",
         "type": "image",
         "title": "Beauty Product"
       },
       {
-        "url": "https://images.unsplash.com/photo-1611224923853-80b023f02d71?w=400&h=300&fit=crop",
-        "type": "image",
+        "url": "https://storage.googleapis.com/novara-gemini-assets/Website%20video/t_wfEjcVwcWX-CuT_wgja_R9S51YQk.mp4",
+        "type": "video",
         "title": "Food Product"
       }
     ],
     "galleryRow2": [
       {
-        "url": "https://videos.pexels.com/video-files/3044129/3044129-sd_640_360_30fps.mp4",
+        "url": "https://storage.googleapis.com/novara-gemini-assets/Website%20video/cjHoUIWI-P6__abI-fxYx_7pR2t22y.mp4",
         "type": "video",
         "title": "Product Showcase"
       },
       {
-        "url": "https://images.unsplash.com/photo-1556740758-90de374c12ad?w=400&h=300&fit=crop",
+        "url": "https://storage.googleapis.com/novara-gemini-assets/Website%20Statics/Prompt_a_premium_202511301915_1.jpeg",
         "type": "image",
         "title": "Brand Banner"
       },
       {
-        "url": "https://videos.pexels.com/video-files/3045163/3045163-sd_640_360_25fps.mp4",
+        "url": "https://storage.googleapis.com/novara-gemini-assets/Website%20video/c9b7f448-9308-4ada-9b26-56d11b04da8c.mp4",
         "type": "video",
         "title": "Social Media Ad"
       },
       {
-        "url": "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&h=300&fit=crop",
+        "url": "https://storage.googleapis.com/novara-gemini-assets/Website%20Statics/Prompt_a_clean_202511301910_1.jpeg",
         "type": "image",
         "title": "Product Shot"
       },
       {
-        "url": "https://videos.pexels.com/video-files/856870/856870-sd_640_360_25fps.mp4",
+        "url": "https://storage.googleapis.com/novara-gemini-assets/Website%20video/Generate_an_08second_202512020044_922uv.mp4",
         "type": "video",
         "title": "Marketing Video"
       },
       {
-        "url": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=300&fit=crop",
-        "type": "image",
+        "url": "https://storage.googleapis.com/novara-gemini-assets/Website%20video/9Kgt3w_x0Ir1LOCAKmUXK_CdQ7aOJU.mp4",
+        "type": "video",
         "title": "Headphones Ad"
       }
     ],
     "galleryRow3": [
       {
-        "url": "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&h=300&fit=crop",
+        "url": "https://storage.googleapis.com/novara-gemini-assets/Website%20Statics/Dental_Clinic_1.jpeg",
         "type": "image",
         "title": "Shoe Product"
       },
       {
-        "url": "https://videos.pexels.com/video-files/857195/857195-sd_640_360_25fps.mp4",
-        "type": "video",
+        "url": "https://storage.googleapis.com/novara-gemini-assets/Website%20Statics/Prompt_a_premium_202511301912_1.jpeg",
+        "type": "image",
         "title": "Brand Video"
       },
       {
-        "url": "https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=400&h=300&fit=crop",
-        "type": "image",
+        "url": "https://storage.googleapis.com/novara-gemini-assets/Website%20video/oQyhoMLVqbH1jru0G3FPP_HVYBtIPR.mp4",
+        "type": "video",
         "title": "Camera Ad"
       },
       {
-        "url": "https://images.unsplash.com/photo-1585386959984-a4155224a1ad?w=400&h=300&fit=crop",
-        "type": "image",
+        "url": "https://storage.googleapis.com/novara-gemini-assets/Website%20video/gIwQoTeDdqfY6KW3t-SI0_aB28Fc8S.mp4",
+        "type": "video",
         "title": "Perfume Ad"
       },
       {
-        "url": "https://videos.pexels.com/video-files/3044129/3044129-sd_640_360_30fps.mp4",
-        "type": "video",
+        "url": "https://storage.googleapis.com/novara-gemini-assets/Website%20Statics/Prompt_a_premium_202511301915_3.jpeg",
+        "type": "image",
         "title": "Promo Video"
       },
       {
-        "url": "https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=400&h=300&fit=crop",
-        "type": "image",
+        "url": "https://storage.googleapis.com/novara-gemini-assets/Website%20video/_1f8bc5d908322fec999849c8933952c4_77672ac8-781d-44b2-8e07-876c12cc356b.mp4",
+        "type": "video",
         "title": "Sunglasses"
       }
     ]
@@ -193,7 +193,7 @@
     "title": "Cheaper than a failed \"Boost Post.\"",
     "packageName": "The Pilot Pack",
     "packageSubtitle": "Perfect for your first campaign.",
-    "price": "$79",
+    "price": "$119",
     "priceNote": "One-time payment. No subscription.",
     "features": [
       "5x Strategic Video Variations",
