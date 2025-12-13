@@ -1,28 +1,23 @@
 import type { Metadata } from "next";
-import { Inter, Inter_Tight, JetBrains_Mono } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
-const inter = Inter({
+const geistSans = Geist({
+  variable: "--font-geist-sans",
   subsets: ["latin"],
-  variable: "--font-body",
-  display: "swap",
 });
 
-const interTight = Inter_Tight({
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
   subsets: ["latin"],
-  variable: "--font-display",
-  display: "swap",
-});
-
-const jetbrainsMono = JetBrains_Mono({
-  subsets: ["latin"],
-  variable: "--font-mono",
-  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "Novara - Autonomous AI Ad Orchestrator",
-  description: "Turn your website link into a month of video ads.",
+  title: "Novara - Turn Your Website Into Video Ads in Minutes",
+  description: "No agencies. No filming. No learning curve. Just paste your URL. We turn your existing content into professional video & static ads engineered to sell.",
+  icons: {
+    icon: '/favicon.ico',
+  },
 };
 
 export default function RootLayout({
@@ -31,9 +26,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en" className="scroll-smooth">
       <body
-        className={`${inter.variable} ${interTight.variable} ${jetbrainsMono.variable} antialiased bg-black text-white selection:bg-[#00E599] selection:text-black`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         {children}
       </body>
