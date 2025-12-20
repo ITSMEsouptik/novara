@@ -55,3 +55,6 @@ export function Scene3D({ children, className = "" }: Scene3DProps) {
     </Canvas>
   );
 }
+
+
+

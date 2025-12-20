@@ -111,3 +111,6 @@ export function WaveMaterial({
 
   return <primitive object={material} attach="material" />;
 }
+
+
+

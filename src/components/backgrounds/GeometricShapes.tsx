@@ -205,3 +205,6 @@ export function GeometricShapes({ scrollOffset = 0, count = 20 }: GeometricShape
     </>
   );
 }
+
+
+

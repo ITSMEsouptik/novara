@@ -48,7 +48,7 @@ export const Trophy = ({ content }: TrophyProps) => {
     const currentVideoIndex = item.type === "video" ? videoIndex++ : -1;
     
     return (
-      <div className="flex-shrink-0 w-[200px] h-[140px] md:w-[240px] md:h-[160px] rounded-xl overflow-hidden shadow-lg group relative bg-gray-200 transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-gray-500/20 border-2 border-transparent hover:border-gray-300/50">
+      <div className="flex-shrink-0 w-[140px] md:w-[160px] rounded-xl overflow-hidden shadow-lg group relative bg-gray-200 transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-gray-500/20 border-2 border-transparent hover:border-gray-300/50 flex items-center justify-center">
         {item.type === "video" ? (
           <video
             ref={(el) => {
@@ -61,7 +61,7 @@ export const Trophy = ({ content }: TrophyProps) => {
             muted
             playsInline
             preload="auto"
-            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+            className="w-full h-auto max-h-[400px] object-contain group-hover:scale-110 transition-transform duration-300"
           >
             <source src={item.url} type="video/mp4" />
           </video>
@@ -70,29 +70,25 @@ export const Trophy = ({ content }: TrophyProps) => {
           <img
             src={item.url}
             alt={item.title}
-            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+            className="w-full h-auto max-h-[400px] object-contain group-hover:scale-110 transition-transform duration-300"
             loading="eager"
           />
         )}
-        {/* Enhanced badge */}
-        <div className="absolute top-2 right-2 glass-strong text-brand-text px-2.5 py-1 rounded-lg text-xs font-semibold backdrop-blur-md border border-gray-200/50 shadow-md">
-          {item.type === "video" ? "🎥" : "📷"}
-        </div>
         {/* Subtle overlay on hover */}
         <div className="absolute inset-0 bg-gray-900/0 group-hover:bg-gray-900/10 transition-all duration-300 pointer-events-none"></div>
       </div>
     );
   };
 
-  const ScrollingRow = ({ items, direction = 'left' }: { items: MediaItem[]; direction?: 'left' | 'right' }) => {
+  const ScrollingColumn = ({ items, direction = 'up' }: { items: MediaItem[]; direction?: 'up' | 'down' }) => {
     // Triple items for seamless infinite scroll
     const tripleItems = [...items, ...items, ...items];
     
     return (
-      <div className="overflow-hidden flex-1 flex items-center">
+      <div className="overflow-hidden flex-1 min-w-0 flex items-center">
         <div 
-          className={`flex gap-3 ${direction === 'left' ? 'animate-scroll-left' : 'animate-scroll-right'}`}
-          style={{ width: 'max-content' }}
+          className={`flex flex-col gap-3 ${direction === 'up' ? 'animate-scroll-up' : 'animate-scroll-down'}`}
+          style={{ height: 'max-content' }}
         >
           {tripleItems.map((item, index) => (
             <MediaItemComponent key={`${direction}-${index}`} item={item} />
@@ -119,10 +115,10 @@ export const Trophy = ({ content }: TrophyProps) => {
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
           {/* Gallery Side */}
-          <div className="h-[400px] md:h-[520px] rounded-2xl shadow-xl relative overflow-hidden glass p-4 flex flex-col gap-3">
-            <ScrollingRow items={content.galleryRow1} direction="left" />
-            <ScrollingRow items={content.galleryRow2} direction="right" />
-            <ScrollingRow items={content.galleryRow3} direction="left" />
+          <div className="h-[400px] md:h-[520px] rounded-2xl shadow-xl relative overflow-hidden glass p-4 flex flex-row gap-3">
+            <ScrollingColumn items={content.galleryRow1} direction="up" />
+            <ScrollingColumn items={content.galleryRow2} direction="down" />
+            <ScrollingColumn items={content.galleryRow3} direction="up" />
             {/* Subtle overlay */}
             <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-white/20 pointer-events-none"></div>
           </div>

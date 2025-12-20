@@ -219,6 +219,24 @@ body {
   }
 }
 
+@keyframes scroll-up {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-33.333%);
+  }
+}
+
+@keyframes scroll-down {
+  0% {
+    transform: translateY(-33.333%);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
 .animate-scroll-left {
   animation: scroll-left 25s linear infinite;
 }
@@ -227,9 +245,19 @@ body {
   animation: scroll-right 25s linear infinite;
 }
 
+.animate-scroll-up {
+  animation: scroll-up 25s linear infinite;
+}
+
+.animate-scroll-down {
+  animation: scroll-down 25s linear infinite;
+}
+
 /* Pause animation on hover */
 .animate-scroll-left:hover,
-.animate-scroll-right:hover {
+.animate-scroll-right:hover,
+.animate-scroll-up:hover,
+.animate-scroll-down:hover {
   animation-play-state: paused;
 }
 
