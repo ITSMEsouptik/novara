@@ -32,7 +32,7 @@
       {
         "iconName": "eye",
         "title": "The Scan",
-        "text": "Our AI reads your website like a senior marketer/CMO. It learns your brand colors, best-sellers, and tone of voice instantly."
+        "text": "Our AI reads your website like a Chief Marketing Officer. It learns your brand colors, best-sellers, and tone of voice instantly."
       },
       {
         "iconName": "lightning",
@@ -68,7 +68,7 @@
     ]
   },
   "trophy": {
-    "title": "What $79 actually buys you.",
+    "title": "What $119 actually buys you.",
     "subtitle": "Based on our analysis of your market, we generate the 3 specific video types your business needs to grow:",
     "videoTypes": [
       {
@@ -193,7 +193,7 @@
     "title": "Cheaper than a failed \"Boost Post.\"",
     "packageName": "The Pilot Pack",
     "packageSubtitle": "Perfect for your first campaign.",
-    "price": "$79",
+    "price": "$119",
     "priceNote": "One-time payment. No subscription.",
     "features": [
       "5x Strategic Video Variations",
