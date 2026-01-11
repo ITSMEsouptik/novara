@@ -1,6 +1,7 @@
 import { POST as submitPost } from '@/app/api/submit/route';
 import { POST as callbackPost } from '@/app/api/n8n/callback/route';
 import { NextRequest } from 'next/server';
+import { storage } from '@/lib/storage';
 
 // Mock Supabase
 jest.mock('@/lib/supabase', () => ({
@@ -40,7 +41,16 @@ describe('API Routes', () => {
 
     it('should handle n8n callback', async () => {
         process.env.N8N_CALLBACK_SECRET = 'secret';
-        const body = JSON.stringify({ job_id: '123', video_url: 'http://video.mp4' });
+        
+        // Create a job first so the callback can update it
+        const jobId = '123';
+        await storage.createJob({
+            job_id: jobId,
+            status: 'submitted',
+            created_at: new Date().toISOString(),
+        });
+
+        const body = JSON.stringify({ job_id: jobId, video_url: 'http://video.mp4' });
 
         const req = new NextRequest('http://localhost:3000/api/n8n/callback', {
             method: 'POST',
