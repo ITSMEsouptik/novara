@@ -10,11 +10,11 @@ const MAX_VIDEOS_TO_GENERATE: number = 1;
 export async function POST(request: NextRequest) {
     console.log('[Batch Video Gen] Request received at:', new Date().toISOString());
 
-    // Verify secret
+    // Verify secret (optional - only validate if configured)
     const secret = request.headers.get('x-n8n-secret');
     const expectedSecret = process.env.N8N_CALLBACK_SECRET;
 
-    if (secret !== expectedSecret) {
+    if (expectedSecret && secret !== expectedSecret) {
         console.error('[Batch Video Gen] Authentication failed');
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }

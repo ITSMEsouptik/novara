@@ -106,19 +106,53 @@ jobs:
 
       - name: Validate required secrets
         run: |
+          echo "🔍 Validating required secrets..."
+          MISSING_SECRETS=0
+          
+          # Required GCP secrets
           if [ -z "${{ secrets.GCP_PROJECT_ID }}" ]; then
             echo "❌ Error: GCP_PROJECT_ID secret is required but not set"
-            exit 1
+            MISSING_SECRETS=1
           fi
           if [ -z "${{ secrets.GCP_SA_KEY }}" ]; then
             echo "❌ Error: GCP_SA_KEY secret is required but not set"
-            exit 1
+            MISSING_SECRETS=1
           fi
           if [ -z "${{ secrets.ARTIFACT_REGISTRY }}" ]; then
             echo "❌ Error: ARTIFACT_REGISTRY secret is required but not set"
+            MISSING_SECRETS=1
+          fi
+          
+          # Required application secrets (must be non-empty)
+          if [ -z "${{ secrets.NEXT_PUBLIC_N8N_WEBHOOK_URL }}" ]; then
+            echo "❌ Error: NEXT_PUBLIC_N8N_WEBHOOK_URL secret is required but not set"
+            MISSING_SECRETS=1
+          fi
+          
+          # Validate NEXT_PUBLIC_N8N_WEBHOOK_URL is a valid URL (basic check)
+          if [ -n "${{ secrets.NEXT_PUBLIC_N8N_WEBHOOK_URL }}" ]; then
+            N8N_URL="${{ secrets.NEXT_PUBLIC_N8N_WEBHOOK_URL }}"
+            if [[ ! "$N8N_URL" =~ ^https?:// ]]; then
+              echo "❌ Error: NEXT_PUBLIC_N8N_WEBHOOK_URL must be a valid HTTP/HTTPS URL"
+              echo "   Current value starts with: ${N8N_URL:0:20}..."
+              MISSING_SECRETS=1
+            fi
+          fi
+          
+          # Optional Supabase secrets (only needed if USE_SUPABASE=true)
+          if [ -n "${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}" ] && [ -z "${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" ]; then
+            echo "⚠️  Warning: NEXT_PUBLIC_SUPABASE_URL is set but SUPABASE_SERVICE_ROLE_KEY is missing"
+            echo "   Supabase storage will not work. Use file storage instead or set both."
+          fi
+          
+          if [ $MISSING_SECRETS -eq 1 ]; then
+            echo ""
+            echo "❌ Build failed: Required secrets are missing or invalid"
+            echo "   Please configure the required secrets in GitHub Settings → Secrets and variables → Actions"
             exit 1
           fi
-          echo "✅ Required GCP secrets are configured"
+          
+          echo "✅ All required secrets are configured and valid"
 
       - name: Build and push Docker image
         run: |
@@ -130,6 +164,9 @@ jobs:
             --build-arg NEXT_PUBLIC_SUPABASE_URL="${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}" \
             --build-arg SUPABASE_SERVICE_ROLE_KEY="${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
             --build-arg N8N_CALLBACK_SECRET="${{ secrets.N8N_CALLBACK_SECRET }}" \
+            --build-arg PERPLEXITY_API_KEY="${{ secrets.PERPLEXITY_API_KEY }}" \
+            --build-arg PERPLEXITY_API_URL="${{ secrets.PERPLEXITY_API_URL }}" \
+            --build-arg PERPLEXITY_MODEL="${{ secrets.PERPLEXITY_MODEL }}" \
             -t $IMAGE_TAG .
           docker push $IMAGE_TAG
           
@@ -146,6 +183,9 @@ jobs:
           [ -n "${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}" ] && SECRETS_ARRAY+=("NEXT_PUBLIC_SUPABASE_URL=NEXT_PUBLIC_SUPABASE_URL:latest")
           [ -n "${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" ] && SECRETS_ARRAY+=("SUPABASE_SERVICE_ROLE_KEY=SUPABASE_SERVICE_ROLE_KEY:latest")
           [ -n "${{ secrets.COMET_API_KEY }}" ] && SECRETS_ARRAY+=("COMET_API_KEY=COMET_API_KEY:latest")
+          [ -n "${{ secrets.PERPLEXITY_API_KEY }}" ] && SECRETS_ARRAY+=("PERPLEXITY_API_KEY=PERPLEXITY_API_KEY:latest")
+          [ -n "${{ secrets.PERPLEXITY_API_URL }}" ] && SECRETS_ARRAY+=("PERPLEXITY_API_URL=PERPLEXITY_API_URL:latest")
+          [ -n "${{ secrets.PERPLEXITY_MODEL }}" ] && SECRETS_ARRAY+=("PERPLEXITY_MODEL=PERPLEXITY_MODEL:latest")
           
           if [ ${#SECRETS_ARRAY[@]} -gt 0 ]; then
             SECRETS_STRING=$(IFS=,; echo "${SECRETS_ARRAY[*]}")
@@ -299,19 +339,53 @@ jobs:
 
       - name: Validate required secrets
         run: |
+          echo "🔍 Validating required secrets..."
+          MISSING_SECRETS=0
+          
+          # Required GCP secrets
           if [ -z "${{ secrets.GCP_PROJECT_ID }}" ]; then
             echo "❌ Error: GCP_PROJECT_ID secret is required but not set"
-            exit 1
+            MISSING_SECRETS=1
           fi
           if [ -z "${{ secrets.GCP_SA_KEY }}" ]; then
             echo "❌ Error: GCP_SA_KEY secret is required but not set"
-            exit 1
+            MISSING_SECRETS=1
           fi
           if [ -z "${{ secrets.ARTIFACT_REGISTRY }}" ]; then
             echo "❌ Error: ARTIFACT_REGISTRY secret is required but not set"
+            MISSING_SECRETS=1
+          fi
+          
+          # Required application secrets (must be non-empty)
+          if [ -z "${{ secrets.NEXT_PUBLIC_N8N_WEBHOOK_URL }}" ]; then
+            echo "❌ Error: NEXT_PUBLIC_N8N_WEBHOOK_URL secret is required but not set"
+            MISSING_SECRETS=1
+          fi
+          
+          # Validate NEXT_PUBLIC_N8N_WEBHOOK_URL is a valid URL (basic check)
+          if [ -n "${{ secrets.NEXT_PUBLIC_N8N_WEBHOOK_URL }}" ]; then
+            N8N_URL="${{ secrets.NEXT_PUBLIC_N8N_WEBHOOK_URL }}"
+            if [[ ! "$N8N_URL" =~ ^https?:// ]]; then
+              echo "❌ Error: NEXT_PUBLIC_N8N_WEBHOOK_URL must be a valid HTTP/HTTPS URL"
+              echo "   Current value starts with: ${N8N_URL:0:20}..."
+              MISSING_SECRETS=1
+            fi
+          fi
+          
+          # Optional Supabase secrets (only needed if USE_SUPABASE=true)
+          if [ -n "${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}" ] && [ -z "${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" ]; then
+            echo "⚠️  Warning: NEXT_PUBLIC_SUPABASE_URL is set but SUPABASE_SERVICE_ROLE_KEY is missing"
+            echo "   Supabase storage will not work. Use file storage instead or set both."
+          fi
+          
+          if [ $MISSING_SECRETS -eq 1 ]; then
+            echo ""
+            echo "❌ Build failed: Required secrets are missing or invalid"
+            echo "   Please configure the required secrets in GitHub Settings → Secrets and variables → Actions"
             exit 1
           fi
-          echo "✅ Required GCP secrets are configured"
+          
+          echo "✅ All required secrets are configured and valid"
 
       - name: Build and push Docker image
         run: |
@@ -323,6 +397,9 @@ jobs:
             --build-arg NEXT_PUBLIC_SUPABASE_URL="${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}" \
             --build-arg SUPABASE_SERVICE_ROLE_KEY="${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
             --build-arg N8N_CALLBACK_SECRET="${{ secrets.N8N_CALLBACK_SECRET }}" \
+            --build-arg PERPLEXITY_API_KEY="${{ secrets.PERPLEXITY_API_KEY }}" \
+            --build-arg PERPLEXITY_API_URL="${{ secrets.PERPLEXITY_API_URL }}" \
+            --build-arg PERPLEXITY_MODEL="${{ secrets.PERPLEXITY_MODEL }}" \
             -t $IMAGE_TAG -t $IMAGE_LATEST .
           docker push $IMAGE_TAG
           docker push $IMAGE_LATEST
@@ -341,6 +418,9 @@ jobs:
           [ -n "${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}" ] && SECRETS_ARRAY+=("NEXT_PUBLIC_SUPABASE_URL=NEXT_PUBLIC_SUPABASE_URL:latest")
           [ -n "${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" ] && SECRETS_ARRAY+=("SUPABASE_SERVICE_ROLE_KEY=SUPABASE_SERVICE_ROLE_KEY:latest")
           [ -n "${{ secrets.COMET_API_KEY }}" ] && SECRETS_ARRAY+=("COMET_API_KEY=COMET_API_KEY:latest")
+          [ -n "${{ secrets.PERPLEXITY_API_KEY }}" ] && SECRETS_ARRAY+=("PERPLEXITY_API_KEY=PERPLEXITY_API_KEY:latest")
+          [ -n "${{ secrets.PERPLEXITY_API_URL }}" ] && SECRETS_ARRAY+=("PERPLEXITY_API_URL=PERPLEXITY_API_URL:latest")
+          [ -n "${{ secrets.PERPLEXITY_MODEL }}" ] && SECRETS_ARRAY+=("PERPLEXITY_MODEL=PERPLEXITY_MODEL:latest")
           
           # Join array with commas if any secrets exist
           if [ ${#SECRETS_ARRAY[@]} -gt 0 ]; then
