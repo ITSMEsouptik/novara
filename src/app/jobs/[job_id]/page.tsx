@@ -71,7 +71,24 @@ export default function JobPage() {
                 }
             } catch (err) {
                 const errorMessage = err instanceof Error ? err.message : 'Failed to fetch status';
-                setError(errorMessage);
+                
+                // If it's a 404, try to get more details from the response
+                if (errorMessage.includes('Job not found')) {
+                    try {
+                        const errorRes = await fetch(`/api/status?job_id=${jobId}`);
+                        const errorData = await errorRes.json().catch(() => ({}));
+                        if (errorData.details) {
+                            setError(`${errorMessage}: ${errorData.details}`);
+                        } else {
+                            setError(errorMessage);
+                        }
+                    } catch {
+                        setError(errorMessage);
+                    }
+                } else {
+                    setError(errorMessage);
+                }
+                
                 setPolling(false);
             }
         };
@@ -310,9 +327,33 @@ export default function JobPage() {
                         {/* Tab Content */}
                         <div className="p-6">
                             {activeTab === 'analysis' && (
-                                <AnalysisDashboard
-                                    analysisData={(job.payload || {}) as unknown as Parameters<typeof AnalysisDashboard>[0]['analysisData']}
-                                />
+                                <div className="space-y-6">
+                                    <AnalysisDashboard
+                                        analysisData={(job.payload || {}) as unknown as Parameters<typeof AnalysisDashboard>[0]['analysisData']}
+                                    />
+                                    
+                                    {/* Proceed Button - Shows after analysis completes */}
+                                    {job.payload?.analysis_status === 'completed' && (
+                                        <div className="glass p-6 rounded-xl border border-gray-200/50 bg-gradient-to-r from-brand-primary/5 to-brand-primary/10">
+                                            <div className="flex items-center justify-between">
+                                                <div>
+                                                    <h3 className="text-lg font-semibold text-brand-text mb-1">Ready to Generate Video</h3>
+                                                    <p className="text-sm text-brand-textSecondary">
+                                                        Analysis is complete. Proceed to generate video content.
+                                                    </p>
+                                                </div>
+                                                <button
+                                                    disabled
+                                                    className="px-6 py-3 bg-gray-300 text-gray-500 rounded-lg font-medium cursor-not-allowed flex items-center gap-2"
+                                                    title="Video generation is currently paused"
+                                                >
+                                                    <Video className="w-5 h-5" />
+                                                    Proceed with Video Generation
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
                             )}
 
                             {activeTab === 'outputs' && (

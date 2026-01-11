@@ -134,7 +134,7 @@ export async function callPerplexityAPI(prompt: string): Promise<DeepAnalysisRes
                 messages: [
                     {
                         role: 'system',
-                        content: 'You are an expert CMO and Creative Strategist. Always respond with valid JSON only, no markdown formatting, no code blocks.'
+                        content: 'You are an expert CMO and Creative Strategist. CRITICAL: You MUST respond with ONLY valid JSON. No markdown code blocks, no explanations, no text before or after the JSON. Start with { and end with }. Ensure all strings are properly escaped and all commas are correct. The JSON MUST be complete and properly closed.'
                     },
                     {
                         role: 'user',
@@ -142,7 +142,7 @@ export async function callPerplexityAPI(prompt: string): Promise<DeepAnalysisRes
                     }
                 ],
                 temperature: 0.7,
-                max_tokens: 4000,
+                max_tokens: 6000, // Increased from 4000 to allow for longer responses
             }),
             signal: controller.signal,
         });
@@ -158,9 +158,13 @@ export async function callPerplexityAPI(prompt: string): Promise<DeepAnalysisRes
         const content = data.choices?.[0]?.message?.content;
 
         if (!content) {
+            console.error('[Perplexity] No content in response. Full response:', JSON.stringify(data, null, 2));
             throw new Error('No content in Perplexity API response');
         }
 
+        // Log content length for debugging
+        console.log(`[Perplexity] Response content length: ${content.length} chars`);
+        
         return parsePerplexityResponse(content);
     } catch (error) {
         clearTimeout(timeoutId);
@@ -184,10 +188,138 @@ export function parsePerplexityResponse(content: string): DeepAnalysisResponse {
             cleanedContent = cleanedContent.replace(/^```\n?/, '').replace(/\n?```$/, '');
         }
 
+        // Try to extract JSON object if there's extra text around it
+        // Look for the first { and last } to extract the JSON object
+        const firstBrace = cleanedContent.indexOf('{');
+        const lastBrace = cleanedContent.lastIndexOf('}');
+        
+        if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+            cleanedContent = cleanedContent.substring(firstBrace, lastBrace + 1);
+        }
+
+        // Try to fix common JSON issues
+        // Remove trailing commas before closing braces/brackets
+        cleanedContent = cleanedContent.replace(/,(\s*[}\]])/g, '$1');
+        
+        // Remove any control characters that might break JSON parsing
+        cleanedContent = cleanedContent.replace(/[\x00-\x1F\x7F]/g, '');
+
         const parsed = JSON.parse(cleanedContent);
         return validateAnalysisSchema(parsed);
     } catch (error) {
-        throw new Error(`Failed to parse Perplexity response as JSON: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        // Log the problematic content for debugging
+        // Show first 500 chars and last 200 chars to see where it breaks
+        const previewStart = content.substring(0, 500);
+        const previewEnd = content.length > 500 ? content.substring(content.length - 200) : '';
+        const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+        console.error('[Perplexity] Failed to parse response.');
+        console.error('[Perplexity] Content length:', content.length, 'chars');
+        console.error('[Perplexity] First 500 chars:', previewStart);
+        if (previewEnd) {
+            console.error('[Perplexity] Last 200 chars:', previewEnd);
+        }
+        
+        // Extract error position from error message if available
+        const positionMatch = errorMsg.match(/position (\d+)/);
+        if (positionMatch) {
+            const errorPos = parseInt(positionMatch[1], 10);
+            const startPos = Math.max(0, errorPos - 100);
+            const endPos = Math.min(content.length, errorPos + 100);
+            console.error(`[Perplexity] Content around error position ${errorPos}:`, content.substring(startPos, endPos));
+        }
+        
+        console.error('[Perplexity] Parse error:', errorMsg);
+        
+        // Try to extract and fix incomplete JSON
+        try {
+            let fallbackContent = content.trim();
+            
+            // Extract JSON between first { and last }
+            const firstBrace = fallbackContent.indexOf('{');
+            const lastBrace = fallbackContent.lastIndexOf('}');
+            
+            if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+                fallbackContent = fallbackContent.substring(firstBrace, lastBrace + 1);
+                
+                // Try to fix common JSON issues
+                // 1. Remove trailing commas
+                fallbackContent = fallbackContent
+                    .replace(/,\s*}/g, '}')  // Remove trailing commas before }
+                    .replace(/,\s*]/g, ']')  // Remove trailing commas before ]
+                    .replace(/[\x00-\x1F\x7F]/g, '') // Remove control characters
+                    .replace(/\n\s*\n/g, '\n'); // Remove extra newlines
+                
+                // 2. If JSON is incomplete (doesn't end with }), try to close it
+                // Count opening and closing braces
+                const openBraces = (fallbackContent.match(/{/g) || []).length;
+                const closeBraces = (fallbackContent.match(/}/g) || []).length;
+                
+                if (openBraces > closeBraces) {
+                    // Missing closing braces - try to close them (risky but sometimes works)
+                    const missingBraces = openBraces - closeBraces;
+                    console.warn(`[Perplexity] JSON appears incomplete - missing ${missingBraces} closing brace(s), attempting to fix...`);
+                    
+                    // Try to close unclosed objects/arrays by finding the last incomplete structure
+                    // This is a heuristic approach - may not always work
+                    for (let i = 0; i < missingBraces; i++) {
+                        // Find the last unclosed object by checking from the end
+                        // Simple approach: just add closing braces at the end
+                        // But we need to be smarter - check for unclosed strings first
+                        
+                        // Check if there's an unclosed string (odd number of quotes)
+                        const quotes = (fallbackContent.match(/"/g) || []).length;
+                        if (quotes % 2 !== 0) {
+                            // Unclosed string - try to close it first
+                            const lastQuote = fallbackContent.lastIndexOf('"');
+                            if (lastQuote > 0 && fallbackContent[lastQuote - 1] !== '\\') {
+                                // String is not escaped, try to close it
+                                // This is risky - we'll just add a quote
+                                fallbackContent = fallbackContent + '"';
+                            }
+                        }
+                        
+                        // Add closing brace
+                        fallbackContent = fallbackContent + '}';
+                    }
+                }
+                
+                console.log('[Perplexity] Attempting fallback parse with cleaned content...');
+                const parsed = JSON.parse(fallbackContent);
+                console.log('[Perplexity] ✓ Successfully parsed after fallback cleaning');
+                return validateAnalysisSchema(parsed);
+            } else {
+                console.error('[Perplexity] Could not find valid JSON structure (no { or })');
+            }
+        } catch (fallbackError) {
+            // If fallback also fails, log and throw with context
+            console.error('[Perplexity] Fallback parsing also failed:', fallbackError instanceof Error ? fallbackError.message : 'Unknown error');
+            
+            // Log the actual problematic content for manual inspection
+            // Save to a format that can help debug
+            const errorContext = {
+                contentLength: content.length,
+                errorMessage: error instanceof Error ? error.message : 'Unknown error',
+                fallbackErrorMessage: fallbackError instanceof Error ? fallbackError.message : 'Unknown error',
+                contentPreview: {
+                    first500: content.substring(0, 500),
+                    last200: content.length > 500 ? content.substring(content.length - 200) : '',
+                    aroundError: content.length > 5640 ? content.substring(5630, 5662) : content.substring(Math.max(0, content.length - 32))
+                }
+            };
+            console.error('[Perplexity] Error context:', JSON.stringify(errorContext, null, 2));
+            
+            throw new Error(
+                `Failed to parse Perplexity response as JSON: ${error instanceof Error ? error.message : 'Unknown error'}. ` +
+                `Content length: ${content.length} chars. ` +
+                `The JSON may be incomplete or malformed. Check logs for full content.`
+            );
+        }
+        
+        throw new Error(
+            `Failed to parse Perplexity response as JSON: ${error instanceof Error ? error.message : 'Unknown error'}. ` +
+            `Content length: ${content.length} chars. ` +
+            `The JSON may be incomplete or malformed. Check logs for full content.`
+        );
     }
 }
 

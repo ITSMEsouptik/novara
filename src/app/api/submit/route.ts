@@ -54,9 +54,12 @@ export async function POST(request: NextRequest) {
 
         // Forward to n8n
         const n8nUrl = process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL;
-        if (!n8nUrl) {
-            console.error('Missing N8N_WEBHOOK_URL');
-            return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
+        if (!n8nUrl || n8nUrl.trim() === '') {
+            console.error('Missing NEXT_PUBLIC_N8N_WEBHOOK_URL - value:', n8nUrl);
+            return NextResponse.json({ 
+                error: 'Server configuration error', 
+                details: 'NEXT_PUBLIC_N8N_WEBHOOK_URL is missing or empty. This variable must be set during Docker build. Please check GitHub Secrets and redeploy.' 
+            }, { status: 500 });
         }
 
         // Construct new FormData for n8n
@@ -88,15 +91,20 @@ export async function POST(request: NextRequest) {
         // We wait to ensure it's received.
         try {
             // We use 'form-data' package headers
-            await fetch(n8nUrl, {
+            const n8nResponse = await fetch(n8nUrl, {
                 method: 'POST',
                 body: outgoingFormData as unknown as BodyInit,
                 headers: outgoingFormData.getHeaders() as Record<string, string>,
             });
+            
+            if (!n8nResponse.ok) {
+                const errorText = await n8nResponse.text().catch(() => 'Unknown error');
+                console.error(`n8n error: ${n8nResponse.status} - ${errorText}`);
+                // We still return success to user because job is saved, but log the error
+            }
         } catch (n8nError) {
-            console.error('n8n error:', n8nError);
-            // We still return success to user because job is saved, but maybe mark status as failed?
-            // For now, let's assume it works or we log it.
+            console.error('n8n network error:', n8nError);
+            // We still return success to user because job is saved, but log the error
         }
 
         // Trigger async analysis (fire and forget - don't await)

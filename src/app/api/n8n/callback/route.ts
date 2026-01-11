@@ -5,7 +5,8 @@ export async function POST(request: NextRequest) {
     const secret = request.headers.get('x-n8n-secret');
     const expectedSecret = process.env.N8N_CALLBACK_SECRET;
 
-    if (secret !== expectedSecret) {
+    // Only validate secret if it's configured (optional for now since video generation is paused)
+    if (expectedSecret && secret !== expectedSecret) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

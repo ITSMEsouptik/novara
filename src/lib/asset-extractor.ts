@@ -47,9 +47,18 @@ export async function extractBrandAssets(url: string, outputDir: string): Promis
         }
 
         // Launch browser
+        // Use system Chrome if available (for Docker deployments)
+        const executablePath = process.env.PUPPETEER_EXECUTABLE_PATH || undefined;
         browser = await puppeteer.launch({
             headless: true,
-            args: ['--no-sandbox', '--disable-setuid-sandbox'],
+            executablePath,
+            timeout: 60000, // Increase timeout to 60 seconds
+            args: [
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-dev-shm-usage',
+                '--disable-gpu',
+            ],
         });
 
         const page = await browser.newPage();

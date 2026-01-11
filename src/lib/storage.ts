@@ -188,19 +188,38 @@ function getStorage(): Storage {
     // Check if USE_SUPABASE is explicitly set to 'true'
     const useSupabaseExplicit = process.env.USE_SUPABASE === 'true';
     
-    // If USE_SUPABASE is not explicitly set to 'true', use file storage
-    // This is safer - only use Supabase when explicitly enabled
-    if (!useSupabaseExplicit) {
-        console.log('[Storage] Using file-based storage (USE_SUPABASE is not set to "true")');
+    // Auto-detect Supabase: If Supabase env vars are present and we're in production,
+    // automatically use Supabase storage (for Cloud Run's ephemeral filesystem)
+    const hasSupabaseVars = !!(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
+    const isProduction = process.env.NODE_ENV === 'production';
+    
+    // Use Supabase if explicitly enabled OR if Supabase vars are present in production
+    const shouldUseSupabase = useSupabaseExplicit || (hasSupabaseVars && isProduction);
+    
+    if (!shouldUseSupabase) {
+        if (isProduction && !hasSupabaseVars) {
+            console.warn('[Storage] ⚠️  Using file-based storage in production (ephemeral filesystem)');
+            console.warn('[Storage] ⚠️  Jobs may be lost when containers restart. Set SUPABASE env vars to use persistent storage.');
+        } else {
+            console.log('[Storage] Using file-based storage');
+        }
         return new FileStorage();
     }
 
-    // If explicitly set to true, try to use Supabase
+    // Try to use Supabase
     try {
-        console.log('[Storage] Using Supabase storage');
+        if (useSupabaseExplicit) {
+            console.log('[Storage] Using Supabase storage (USE_SUPABASE=true)');
+        } else {
+            console.log('[Storage] Using Supabase storage (auto-detected from env vars in production)');
+        }
         return new SupabaseStorage();
     } catch (error) {
-        console.warn('[Storage] Supabase not available, falling back to file storage:', error);
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        console.warn('[Storage] Supabase not available, falling back to file storage:', errorMessage);
+        if (isProduction) {
+            console.warn('[Storage] ⚠️  File-based storage in production may cause jobs to be lost!');
+        }
         return new FileStorage();
     }
 }

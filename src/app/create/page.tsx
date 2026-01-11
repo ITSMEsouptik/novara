@@ -58,13 +58,23 @@ export default function CreatePage() {
                 body: data,
             });
 
-            if (!res.ok) throw new Error('Failed to submit');
+            const responseData = await res.json();
 
-            const { job_id } = await res.json();
-            router.push(`/jobs/${job_id}`);
+            if (!res.ok) {
+                const errorMessage = responseData.error || 'Failed to submit';
+                const errorDetails = responseData.details ? `\n\nDetails: ${responseData.details}` : '';
+                throw new Error(`${errorMessage}${errorDetails}`);
+            }
+
+            if (!responseData.job_id) {
+                throw new Error('No job ID returned from server');
+            }
+
+            router.push(`/jobs/${responseData.job_id}`);
         } catch (error) {
-            console.error(error);
-            alert('Something went wrong. Please try again.');
+            console.error('Submit error:', error);
+            const errorMessage = error instanceof Error ? error.message : 'Something went wrong. Please try again.';
+            alert(errorMessage);
         } finally {
             setIsLoading(false);
         }
